@@ -143,6 +143,12 @@ public class RAM: Module {
                 self?.processReader?.read()
             }
         }
+
+        self.settingsView.callbackWhenUpdateProcessMetric = { [weak self] in
+            DispatchQueue.global(qos: .background).async {
+                self?.processReader?.read()
+            }
+        }
         
         self.setReaders([self.usageReader, self.processReader])
     }

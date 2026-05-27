@@ -50,11 +50,13 @@ internal class Settings: NSStackView, Settings_v, NSTextFieldDelegate {
     private var notificationLevel: String = "Disabled"
     private var textValue: String = "$mem.used/$mem.total ($pressure.value)"
     private var combinedProcessesState: Bool = false
+    private var processMemoryMetric: String = "mem"
     
     private let title: String
     
     public var callback: (() -> Void) = {}
     public var callbackWhenUpdateNumberOfProcesses: (() -> Void) = {}
+    public var callbackWhenUpdateProcessMetric: (() -> Void) = {}
     public var setInterval: ((_ value: Int) -> Void) = {_ in }
     public var setTopInterval: ((_ value: Int) -> Void) = {_ in }
     
@@ -69,7 +71,8 @@ internal class Settings: NSStackView, Settings_v, NSTextFieldDelegate {
         self.notificationLevel = Store.shared.string(key: "\(self.title)_notificationLevel", defaultValue: self.notificationLevel)
         self.textValue = Store.shared.string(key: "\(self.title)_textWidgetValue", defaultValue: self.textValue)
         self.combinedProcessesState = Store.shared.bool(key: "\(self.title)_combinedProcesses", defaultValue: self.combinedProcessesState)
-        
+        self.processMemoryMetric = Store.shared.string(key: "\(self.title)_processMemoryMetric", defaultValue: self.processMemoryMetric)
+
         super.init(frame: NSRect.zero)
         
         self.orientation = .vertical
@@ -106,6 +109,15 @@ internal class Settings: NSStackView, Settings_v, NSTextFieldDelegate {
                 action: #selector(changeNumberOfProcesses),
                 items: NumbersOfProcesses.map{ KeyValue_t(key: "\($0)", value: "\($0)") },
                 selected: "\(self.numberOfProcesses)"
+            )),
+            PreferencesRow(localizedString("Process memory metric"), component: selectView(
+                action: #selector(changeProcessMemoryMetric),
+                items: [
+                    KeyValue_t(key: "mem",   value: "Memory"),
+                    KeyValue_t(key: "rsize", value: "Real Memory"),
+                    KeyValue_t(key: "cmprs", value: "Compressed Memory")
+                ],
+                selected: self.processMemoryMetric
             ))
         ]))
         
@@ -173,6 +185,12 @@ internal class Settings: NSStackView, Settings_v, NSTextFieldDelegate {
         self.combinedProcessesState = controlState(sender)
         Store.shared.set(key: "\(self.title)_combinedProcesses", value: self.combinedProcessesState)
         self.callback()
+    }
+    @objc private func changeProcessMemoryMetric(_ sender: NSMenuItem) {
+        guard let key = sender.representedObject as? String else { return }
+        self.processMemoryMetric = key
+        Store.shared.set(key: "\(self.title)_processMemoryMetric", value: key)
+        self.callbackWhenUpdateProcessMetric()
     }
     
     func controlTextDidChange(_ notification: Notification) {

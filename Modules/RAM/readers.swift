@@ -115,9 +115,13 @@ public class ProcessReader: Reader<[TopProcess]> {
     private var numberOfProcesses: Int {
         get { Store.shared.int(key: "\(self.title)_processes", defaultValue: 8) }
     }
-    
-    private var combinedProcesses: Bool{
+
+    private var combinedProcesses: Bool {
         get { Store.shared.bool(key: "\(self.title)_combinedProcesses", defaultValue: false) }
+    }
+
+    private var processMemoryMetric: String {
+        get { Store.shared.string(key: "\(self.title)_processMemoryMetric", defaultValue: "mem") }
     }
     
     private typealias dynGetResponsiblePidFuncType = @convention(c) (CInt) -> CInt
@@ -131,13 +135,19 @@ public class ProcessReader: Reader<[TopProcess]> {
         if self.numberOfProcesses == 0 {
             return
         }
-        
+
+        if self.processMemoryMetric == "rsize" {
+            self.readViaPS()
+            return
+        }
+
         let task = Process()
         task.launchPath = "/usr/bin/top"
+        let metric = self.processMemoryMetric
         if self.combinedProcesses {
-            task.arguments = ["-l", "1", "-o", "mem", "-stats", "pid,command,mem"]
+            task.arguments = ["-l", "1", "-o", metric, "-stats", "pid,command,\(metric)"]
         } else {
-            task.arguments = ["-l", "1", "-o", "mem", "-n", "\(self.numberOfProcesses)", "-stats", "pid,command,mem"]
+            task.arguments = ["-l", "1", "-o", metric, "-n", "\(self.numberOfProcesses)", "-stats", "pid,command,\(metric)"]
         }
         
         let outputPipe = Pipe()
@@ -212,6 +222,92 @@ public class ProcessReader: Reader<[TopProcess]> {
         self.callback(Array(result.prefix(self.numberOfProcesses)))
     }
     
+    /// Reads resident set size (real memory) for all processes via `ps`,
+    /// which matches Activity Monitor's "Real Memory" column.
+    private func readViaPS() {
+        let task = Process()
+        task.launchPath = "/bin/ps"
+        // pid=,rss=,comm= suppresses headers; rss is in KB; comm is the basename
+        task.arguments = ["-A", "-o", "pid=,rss=,comm="]
+
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+        defer {
+            outputPipe.fileHandleForReading.closeFile()
+            errorPipe.fileHandleForReading.closeFile()
+        }
+        task.standardOutput = outputPipe
+        task.standardError = errorPipe
+
+        do {
+            try task.run()
+        } catch let err {
+            error("ps(): \(err.localizedDescription)", log: self.log)
+            return
+        }
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        guard let output = String(data: outputData, encoding: .utf8), !output.isEmpty else { return }
+
+        var processes: [TopProcess] = []
+        output.enumerateLines { line, _ in
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            // Fields: pid  rss  comm (comm may contain spaces in edge cases)
+            let parts = trimmed.split(separator: " ", maxSplits: 2, omittingEmptySubsequences: true)
+            guard parts.count >= 3,
+                  let pid = Int(parts[0]),
+                  let rssKB = Double(parts[1]),
+                  rssKB > 0 else { return }
+
+            let rawName = String(parts[2])
+            var name = rawName
+            if let app = NSRunningApplication(processIdentifier: pid_t(pid)), let n = app.localizedName {
+                name = n
+            }
+            // ps rss is in KB; convert to bytes to match TopProcess convention
+            processes.append(TopProcess(pid: pid, name: name, usage: rssKB * 1024))
+        }
+
+        processes.sort { $0.usage > $1.usage }
+
+        if !self.combinedProcesses {
+            self.callback(Array(processes.prefix(self.numberOfProcesses)))
+            return
+        }
+
+        var processGroups: [String: [TopProcess]] = [:]
+        for process in processes {
+            let responsiblePid = ProcessReader.getResponsiblePid(process.pid)
+            let groupKey = "\(responsiblePid)"
+            if processGroups[groupKey] != nil {
+                processGroups[groupKey]!.append(process)
+            } else {
+                processGroups[groupKey] = [process]
+            }
+        }
+
+        var result: [TopProcess] = []
+        for (_, procs) in processGroups {
+            let totalUsage = procs.reduce(0) { $0 + $1.usage }
+            let firstProcess = procs.first!
+            let name: String
+            if let app = NSRunningApplication(processIdentifier: pid_t(ProcessReader.getResponsiblePid(firstProcess.pid))),
+               let appName = app.localizedName {
+                name = appName
+            } else {
+                name = firstProcess.name
+            }
+            result.append(TopProcess(
+                pid: ProcessReader.getResponsiblePid(firstProcess.pid),
+                name: name,
+                usage: totalUsage
+            ))
+        }
+
+        result.sort { $0.usage > $1.usage }
+        self.callback(Array(result.prefix(self.numberOfProcesses)))
+    }
+
     private static let dynGetResponsiblePidFunc: UnsafeMutableRawPointer? = {
         let result = dlsym(UnsafeMutableRawPointer(bitPattern: -1), "responsibility_get_pid_responsible_for_pid")
         if result == nil {
