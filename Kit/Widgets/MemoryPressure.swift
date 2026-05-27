@@ -43,32 +43,42 @@ public class MemoryPressureWidget: WidgetWrapper {
         var value: Int = 0
         self.queue.sync { value = self.pressurePercent }
 
-        let text = "\(value)%"
-        let fontSize: CGFloat = 12
+        let label = "RAM"
+        let labelFontSize: CGFloat = 7
+        let valueFontSize: CGFloat = 12
         let style = NSMutableParagraphStyle()
-        style.alignment = .center
+        style.alignment = .left
 
-        let attrs: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: fontSize, weight: .regular),
+        // Measure both strings to find the required width
+        let labelAttrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: labelFontSize, weight: .light),
+            .foregroundColor: isDarkMode ? NSColor.white : NSColor.textColor,
+            .paragraphStyle: style
+        ]
+        let valueAttrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: valueFontSize, weight: .regular),
             .foregroundColor: NSColor.textColor,
             .paragraphStyle: style
         ]
 
-        let attrStr = NSAttributedString(string: text, attributes: attrs)
-        let strSize = attrStr.boundingRect(
-            with: CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude),
-            options: [.usesLineFragmentOrigin, .usesFontLeading]
-        )
+        let labelStr = NSAttributedString(string: label, attributes: labelAttrs)
+        let valueStr = NSAttributedString(string: "\(value)%", attributes: valueAttrs)
 
-        let width = (strSize.width + Constants.Widget.margin.x * 2).roundedUpToNearestTen()
-        let originY: CGFloat = (Constants.Widget.height - fontSize - 1) / 2
-        let rect = CGRect(
-            x: Constants.Widget.margin.x,
-            y: originY,
-            width: width - (Constants.Widget.margin.x * 2),
-            height: fontSize
-        )
-        attrStr.draw(with: rect)
+        let measure = { (s: NSAttributedString) -> CGFloat in
+            s.boundingRect(
+                with: CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude),
+                options: [.usesLineFragmentOrigin, .usesFontLeading]
+            ).width
+        }
+
+        let width = (max(measure(labelStr), measure(valueStr)) + Constants.Widget.margin.x * 2).roundedUpToNearestTen()
+        let innerWidth = width - (Constants.Widget.margin.x * 2)
+
+        // Label at top (same position as Mini)
+        labelStr.draw(with: CGRect(x: Constants.Widget.margin.x, y: 12, width: innerWidth, height: labelFontSize))
+
+        // Value at bottom (same position as Mini)
+        valueStr.draw(with: CGRect(x: Constants.Widget.margin.x, y: 1, width: innerWidth, height: valueFontSize + 1))
 
         self.setWidth(width)
     }
