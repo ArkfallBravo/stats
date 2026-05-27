@@ -111,6 +111,18 @@
 				<true/>
 			</dict>
 		</dict>
+		<key>memory_pressure</key>
+		<dict>
+			<key>Default</key>
+			<false/>
+			<key>Order</key>
+			<integer>9</integer>
+			<key>Preview</key>
+			<dict>
+				<key>Value</key>
+				<integer>42</integer>
+			</dict>
+		</dict>
 	</dict>
 	<key>Settings</key>
 	<dict>
