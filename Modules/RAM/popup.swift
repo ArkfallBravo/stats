@@ -54,7 +54,9 @@ internal class Popup: PopupWrapper {
     private var lineChartHistory: Int = 180
     private var lineChartScale: Scale = .none
     private var lineChartFixedScale: Double = 1
+    private var chartMetric: String = "usage"
     private var chartPrefSection: PreferencesSection? = nil
+    private var chartSeparator: NSView? = nil
     
     private var appColorState: SColor = .secondBlue
     private var appColor: NSColor { self.appColorState.additional as? NSColor ?? NSColor.systemRed }
@@ -84,6 +86,7 @@ internal class Popup: PopupWrapper {
         self.lineChartHistory = Store.shared.int(key: "\(self.title)_lineChartHistory", defaultValue: self.lineChartHistory)
         self.lineChartScale = Scale.fromString(Store.shared.string(key: "\(self.title)_lineChartScale", defaultValue: self.lineChartScale.key))
         self.lineChartFixedScale = Double(Store.shared.int(key: "\(self.title)_lineChartFixedScale", defaultValue: 100)) / 100
+        self.chartMetric = Store.shared.string(key: "\(self.title)_chartMetric", defaultValue: self.chartMetric)
         
         let gridView: NSGridView = NSGridView(frame: NSRect(x: 0, y: 0, width: self.frame.width, height: self.frame.height))
         gridView.rowSpacing = 0
@@ -165,9 +168,14 @@ internal class Popup: PopupWrapper {
         return view
     }
     
+    private func chartSeparatorTitle() -> String {
+        self.chartMetric == "pressure" ? localizedString("Pressure history") : localizedString("Usage history")
+    }
+
     private func initChart() -> NSView  {
         let view: NSView = NSView(frame: NSRect(x: 0, y: 0, width: self.frame.width, height: self.chartHeight))
-        let separator = separatorView(localizedString("Usage history"), origin: NSPoint(x: 0, y: self.chartHeight-Constants.Popup.separatorHeight), width: self.frame.width)
+        let separator = separatorView(self.chartSeparatorTitle(), origin: NSPoint(x: 0, y: self.chartHeight-Constants.Popup.separatorHeight), width: self.frame.width)
+        self.chartSeparator = separator
         let container: NSView = NSView(frame: NSRect(x: 0, y: 0, width: self.frame.width, height: separator.frame.origin.y))
         container.wantsLayer = true
         container.layer?.backgroundColor = NSColor.lightGray.withAlphaComponent(0.1).cgColor
@@ -245,7 +253,10 @@ internal class Popup: PopupWrapper {
     
     public func loadCallback(_ value: RAM_Usage) {
         self.apply(value, to: self.loadCache, render: self.renderLoad)
-        self.chart?.addValue(value.usage)
+        let chartValue = self.chartMetric == "pressure"
+            ? Double(value.pressurePercent) / 100.0
+            : value.usage
+        self.chart?.addValue(chartValue)
     }
     
     private func renderLoad(_ value: RAM_Usage) {
@@ -333,6 +344,14 @@ internal class Popup: PopupWrapper {
             initialValue: "\(Int(self.lineChartFixedScale * 100)) %"
         )
         self.chartPrefSection = PreferencesSection([
+            PreferencesRow(localizedString("Chart data"), component: selectView(
+                action: #selector(self.toggleChartMetric),
+                items: [
+                    KeyValue_t(key: "usage",    value: "Usage"),
+                    KeyValue_t(key: "pressure", value: "Memory pressure")
+                ],
+                selected: self.chartMetric
+            )),
             PreferencesRow(localizedString("Chart color"), component: colorSelectView(
                 action: #selector(self.toggleChartColor),
                 items: SColor.allColors,
@@ -388,6 +407,20 @@ internal class Popup: PopupWrapper {
             self.freeColorView?.layer?.backgroundColor = color.cgColor
         }
     }
+    @objc private func toggleChartMetric(_ sender: NSMenuItem) {
+        guard let key = sender.representedObject as? String else { return }
+        self.chartMetric = key
+        Store.shared.set(key: "\(self.title)_chartMetric", value: key)
+        // Clear the chart so old data for the previous metric doesn't bleed in.
+        // setPoints([]) resets to 0 elements; reinit then rebuilds as all-nil slots.
+        self.chart?.setPoints([])
+        self.chart?.reinit(self.lineChartHistory)
+        // Update the separator label
+        if let label = self.chartSeparator?.subviews.first as? NSTextField {
+            label.stringValue = self.chartSeparatorTitle()
+        }
+    }
+
     @objc private func toggleChartColor(_ sender: NSMenuItem) {
         guard let key = sender.representedObject as? String else { return }
         self.chartColorState = SColor.fromString(key, defaultValue: self.chartColorState)
