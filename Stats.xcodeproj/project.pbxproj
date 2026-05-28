@@ -211,6 +211,7 @@
 		9AF9EE1124648ADC005D2270 /* readers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AF9EE1024648ADC005D2270 /* readers.swift */; };
 		AA00000000000000000000A1 /* libIOReport.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C1E45552D11D66200525864 /* libIOReport.tbd */; };
 		AA0000012F000001000BEEF0 /* MemoryPressure.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000022F000001000BEEF0 /* MemoryPressure.swift */; };
+		BB0000012F000001000BEEF0 /* PressureHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000022F000001000BEEF0 /* PressureHistoryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -725,6 +726,7 @@
 		9AF9EE12246492E8005D2270 /* config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = config.plist; sourceTree = "<group>"; };
 		9AF9EE192464A7B3005D2270 /* config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = config.plist; sourceTree = "<group>"; };
 		AA0000022F000001000BEEF0 /* MemoryPressure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryPressure.swift; sourceTree = "<group>"; };
+		BB0000022F000001000BEEF0 /* PressureHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PressureHistoryView.swift; sourceTree = "<group>"; };
 		B8F0D4F1259D19B100AAFAAF /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		BB9E59E725BB5F5E004AED95 /* hu */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hu; path = hu.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C904AECF255939DB004A9EBC /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -1161,6 +1163,7 @@
 				5C2F5C432F8409F200B3F8AC /* preview.swift */,
 				9A81C7592449A41400825D92 /* Info.plist */,
 				9AF9EE192464A7B3005D2270 /* config.plist */,
+				BB0000022F000001000BEEF0 /* PressureHistoryView.swift */,
 			);
 			path = RAM;
 			sourceTree = "<group>";
@@ -2180,6 +2183,7 @@
 				9A953A1424B9D22D0038EF4B /* settings.swift in Sources */,
 				5CF221172B1F4ACB006C583F /* notifications.swift in Sources */,
 				9A81C7692449A43600825D92 /* main.swift in Sources */,
+				BB0000012F000001000BEEF0 /* PressureHistoryView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

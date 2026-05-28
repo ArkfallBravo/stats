@@ -36,6 +36,7 @@ internal class Popup: PopupWrapper {
     private var sliderView: NSView? = nil
     
     private var chart: LineChartView? = nil
+    private var pressureChart: PressureHistoryView? = nil
     private var circle: PieChartView? = nil
     private var level: PieChartView? = nil
     private var processesInitialized: Bool = false
@@ -184,7 +185,12 @@ internal class Popup: PopupWrapper {
         let chartFrame = NSRect(x: 1, y: 0, width: view.frame.width - 2, height: container.frame.height)
         self.chart = LineChartView(frame: chartFrame, num: self.lineChartHistory, scale: self.lineChartScale, fixedScale: self.lineChartFixedScale)
         self.chart?.setColor(self.chartColor)
+        self.chart?.isHidden = (self.chartMetric == "pressure")
         container.addSubview(self.chart!)
+
+        self.pressureChart = PressureHistoryView(frame: chartFrame, num: self.lineChartHistory)
+        self.pressureChart?.isHidden = (self.chartMetric != "pressure")
+        container.addSubview(self.pressureChart!)
         
         view.addSubview(separator)
         view.addSubview(container)
@@ -253,10 +259,11 @@ internal class Popup: PopupWrapper {
     
     public func loadCallback(_ value: RAM_Usage) {
         self.apply(value, to: self.loadCache, render: self.renderLoad)
-        let chartValue = self.chartMetric == "pressure"
-            ? Double(value.pressurePercent) / 100.0
-            : value.usage
-        self.chart?.addValue(chartValue)
+        if self.chartMetric == "pressure" {
+            self.pressureChart?.addValue(value: Double(value.pressurePercent) / 100.0, level: value.pressure.level)
+        } else {
+            self.chart?.addValue(value.usage)
+        }
     }
     
     private func renderLoad(_ value: RAM_Usage) {
@@ -411,11 +418,17 @@ internal class Popup: PopupWrapper {
         guard let key = sender.representedObject as? String else { return }
         self.chartMetric = key
         Store.shared.set(key: "\(self.title)_chartMetric", value: key)
-        // Clear the chart so old data for the previous metric doesn't bleed in.
-        // setPoints([]) resets to 0 elements; reinit then rebuilds as all-nil slots.
-        self.chart?.setPoints([])
-        self.chart?.reinit(self.lineChartHistory)
-        // Update the separator label
+        let isPressure = (key == "pressure")
+        // Show/hide the correct chart view
+        self.chart?.isHidden = isPressure
+        self.pressureChart?.isHidden = !isPressure
+        // Clear the newly-visible chart so old data doesn't bleed in
+        if isPressure {
+            self.pressureChart?.reinit(self.lineChartHistory)
+        } else {
+            self.chart?.setPoints([])
+            self.chart?.reinit(self.lineChartHistory)
+        }
         if let label = self.chartSeparator?.subviews.first as? NSTextField {
             label.stringValue = self.chartSeparatorTitle()
         }
@@ -434,6 +447,7 @@ internal class Popup: PopupWrapper {
         self.lineChartHistory = value
         Store.shared.set(key: "\(self.title)_lineChartHistory", value: value)
         self.chart?.reinit(self.lineChartHistory)
+        self.pressureChart?.reinit(self.lineChartHistory)
     }
     @objc private func toggleLineChartScale(_ sender: NSMenuItem) {
         guard let key = sender.representedObject as? String,
