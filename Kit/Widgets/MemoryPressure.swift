@@ -11,12 +11,15 @@
 
 import Cocoa
 
-/// A menu-bar widget that displays the memory pressure percentage.
+/// A menu-bar widget that displays either memory pressure or memory headroom.
 ///
-/// The value is derived as `100 - kern.memorystatus_level`, giving the
-/// proportion of memory that is under pressure (0 = none, 100 = full).
+/// - Pressure mode  (`displayMode == "pressure"`): shows `100 - kern.memorystatus_level`
+///   — the proportion of memory under pressure (0 = none, 100 = full).
+/// - Headroom mode (`displayMode == "headroom"`): shows `kern.memorystatus_level`
+///   — the available memory headroom (0 = none, 100 = fully available).
 public class MemoryPressureWidget: WidgetWrapper {
     private var pressurePercent: Int = 0
+    private var displayMode: String = "pressure"
 
     public init(title: String, config: NSDictionary?, preview: Bool = false) {
         if preview {
@@ -30,6 +33,13 @@ public class MemoryPressureWidget: WidgetWrapper {
             height: Constants.Widget.height - (2 * Constants.Widget.margin.y)
         ))
 
+        if !preview {
+            self.displayMode = Store.shared.string(
+                key: "\(self.title)_\(self.type.rawValue)_displayMode",
+                defaultValue: self.displayMode
+            )
+        }
+
         self.canDrawConcurrently = true
     }
 
@@ -40,8 +50,10 @@ public class MemoryPressureWidget: WidgetWrapper {
     public override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
 
-        var value: Int = 0
-        self.queue.sync { value = self.pressurePercent }
+        var rawPressure: Int = 0
+        self.queue.sync { rawPressure = self.pressurePercent }
+
+        let displayValue = self.displayMode == "headroom" ? (100 - rawPressure) : rawPressure
 
         let label = "RAM"
         let labelFontSize: CGFloat = 7
@@ -49,7 +61,6 @@ public class MemoryPressureWidget: WidgetWrapper {
         let style = NSMutableParagraphStyle()
         style.alignment = .left
 
-        // Measure both strings to find the required width
         let labelAttrs: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: labelFontSize, weight: .light),
             .foregroundColor: isDarkMode ? NSColor.white : NSColor.textColor,
@@ -62,7 +73,7 @@ public class MemoryPressureWidget: WidgetWrapper {
         ]
 
         let labelStr = NSAttributedString(string: label, attributes: labelAttrs)
-        let valueStr = NSAttributedString(string: "\(value)%", attributes: valueAttrs)
+        let valueStr = NSAttributedString(string: "\(displayValue)%", attributes: valueAttrs)
 
         let measure = { (s: NSAttributedString) -> CGFloat in
             s.boundingRect(
@@ -74,10 +85,7 @@ public class MemoryPressureWidget: WidgetWrapper {
         let width = (max(measure(labelStr), measure(valueStr)) + Constants.Widget.margin.x * 2).roundedUpToNearestTen()
         let innerWidth = width - (Constants.Widget.margin.x * 2)
 
-        // Label at top (same position as Mini)
         labelStr.draw(with: CGRect(x: Constants.Widget.margin.x, y: 12, width: innerWidth, height: labelFontSize))
-
-        // Value at bottom (same position as Mini)
         valueStr.draw(with: CGRect(x: Constants.Widget.margin.x, y: 1, width: innerWidth, height: valueFontSize + 1))
 
         self.setWidth(width)
@@ -86,6 +94,34 @@ public class MemoryPressureWidget: WidgetWrapper {
     public func setValue(_ newValue: Int) {
         guard self.pressurePercent != newValue else { return }
         self.pressurePercent = newValue
+        DispatchQueue.main.async(execute: {
+            self.display()
+        })
+    }
+
+    // MARK: - Settings
+
+    public override func settings() -> NSView {
+        let view = SettingsContainerView()
+
+        view.addArrangedSubview(PreferencesSection([
+            PreferencesRow(localizedString("Display mode"), component: selectView(
+                action: #selector(self.toggleDisplayMode),
+                items: [
+                    KeyValue_t(key: "pressure", value: localizedString("Pressure")),
+                    KeyValue_t(key: "headroom", value: localizedString("Headroom"))
+                ],
+                selected: self.displayMode
+            ))
+        ]))
+
+        return view
+    }
+
+    @objc private func toggleDisplayMode(_ sender: NSMenuItem) {
+        guard let key = sender.representedObject as? String else { return }
+        self.displayMode = key
+        Store.shared.set(key: "\(self.title)_\(self.type.rawValue)_displayMode", value: key)
         DispatchQueue.main.async(execute: {
             self.display()
         })
