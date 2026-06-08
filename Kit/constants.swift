@@ -19,6 +19,7 @@ public struct Popup_c_s {
     public let headerHeight: CGFloat = 42
     public let separatorHeight: CGFloat = 30
     public let portalHeight: CGFloat = 120
+    public let radius: CGFloat = 6
 }
 
 public struct Settings_c_s {
@@ -59,6 +60,7 @@ public enum ModuleType: Int {
     case battery
     case bluetooth
     case clock
+    case remote
     
     case combined
     
@@ -73,6 +75,7 @@ public enum ModuleType: Int {
         case .battery: return "Battery"
         case .bluetooth: return "Bluetooth"
         case .clock: return "Clock"
+        case .remote: return "Remote"
         case .combined: return ""
         }
     }
