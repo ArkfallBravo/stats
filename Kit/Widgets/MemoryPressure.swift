@@ -55,7 +55,7 @@ public class MemoryPressureWidget: WidgetWrapper {
 
         let displayValue = self.displayMode == "headroom" ? (100 - rawPressure) : rawPressure
 
-        let label = "RAM"
+        let label = self.displayMode == "headroom" ? "ROOM" : "PRES"
         let labelFontSize: CGFloat = 7
         let valueFontSize: CGFloat = 12
         let style = NSMutableParagraphStyle()
