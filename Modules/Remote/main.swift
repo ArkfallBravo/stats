@@ -254,14 +254,14 @@ public class Remote: Module {
 
 extension SystemStats {
     internal func fetchMachines() async -> [RemoteMachine] {
-        await self.fetchListAsync(path: "/remote/machine")
+        await self.fetchListAsync(path: "/machine")
     }
     internal func fetchHosts(historyWindow: String = "") async -> [RemoteHost] {
         let path = historyWindow.isEmpty ? "/host" : "/host?history=\(historyWindow)"
         return await self.fetchListAsync(path: path)
     }
     internal func fetchGroups() async -> [RemoteGroup] {
-        await self.fetchListAsync(path: "/group")
+        await self.fetchListAsync(path: "/v1/group")
     }
     internal func fetchAccountOrder() async -> RemoteAccountOrder {
         guard let request = self.authorizedGET("/account") else {
@@ -293,7 +293,7 @@ extension SystemStats {
     }
     
     internal func fetchMachines(completion: @escaping ([RemoteMachine]) -> Void) {
-        self.fetchList(path: "/remote/machine", completion: completion)
+        self.fetchList(path: "/machine", completion: completion)
     }
     
     internal func fetchHosts(historyWindow: String? = nil, completion: @escaping ([RemoteHost]) -> Void) {
@@ -305,7 +305,7 @@ extension SystemStats {
     }
     
     internal func fetchGroups(completion: @escaping ([RemoteGroup]) -> Void) {
-        self.fetchList(path: "/group", completion: completion)
+        self.fetchList(path: "/v1/group", completion: completion)
     }
     
     internal func fetchAccountOrder(completion: @escaping (RemoteAccountOrder) -> Void) {
@@ -405,7 +405,7 @@ public final class RemoteMachineStream: NSObject, URLSessionDataDelegate {
     }
     
     private func openConnection() {
-        guard !self.stopped, SystemStats.shared.isAuthorized, let url = URL(string: "\(SystemStats.host)/remote/machine/\(self.machineID)/sse") else { return }
+        guard !self.stopped, SystemStats.shared.isAuthorized, let url = URL(string: "\(SystemStats.host)/machine/\(self.machineID)/sse") else { return }
         
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = .infinity
