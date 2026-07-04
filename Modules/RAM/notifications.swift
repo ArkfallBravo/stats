@@ -21,21 +21,24 @@ class Notifications: NotificationsWrapper {
     private let totalID: String = "totalUsage"
     private let freeID: String = "free"
     private let pressureID: String = "pressure"
+    private let pressurePercentID: String = "pressurePercent"
     private let swapID: String = "swap"
-    
+
     private var totalState: Bool = false
     private var freeState: Bool = false
     private var pressureState: Bool = false
+    private var pressurePercentState: Bool = false
     private var swapState: Bool = false
-    
+
     private var total: Int = 75
     private var free: Int = 75
     private var pressure: String = ""
+    private var pressurePercent: Int = 75
     private var swap: Int = 1
     private var swapUnit: SizeUnit = .GB
-    
+
     public init(_ module: ModuleType) {
-        super.init(module, [self.totalID, self.freeID, self.pressureID, self.swapID])
+        super.init(module, [self.totalID, self.freeID, self.pressureID, self.pressurePercentID, self.swapID])
         
         if Store.shared.exist(key: "\(self.module)_notifications_totalUsage") {
             let value = Store.shared.string(key: "\(self.module)_notifications_totalUsage", defaultValue: "")
@@ -75,6 +78,8 @@ class Notifications: NotificationsWrapper {
         self.free = Store.shared.int(key: "\(self.module)_notifications_free_value", defaultValue: self.free)
         self.pressureState = Store.shared.bool(key: "\(self.module)_notifications_pressure_state", defaultValue: self.pressureState)
         self.pressure = Store.shared.string(key: "\(self.module)_notifications_pressure_value", defaultValue: self.pressure)
+        self.pressurePercentState = Store.shared.bool(key: "\(self.module)_notifications_pressurePercent_state", defaultValue: self.pressurePercentState)
+        self.pressurePercent = Store.shared.int(key: "\(self.module)_notifications_pressurePercent_value", defaultValue: self.pressurePercent)
         self.swapState = Store.shared.bool(key: "\(self.module)_notifications_swap_state", defaultValue: self.swapState)
         self.swap = Store.shared.int(key: "\(self.module)_notifications_swap_value", defaultValue: self.swap)
         self.swapUnit = SizeUnit.fromString(Store.shared.string(key: "\(self.module)_notifications_swap_unit", defaultValue: self.swapUnit.key))
@@ -92,6 +97,9 @@ class Notifications: NotificationsWrapper {
             PreferencesRow(localizedString("Memory pressure"), component: PreferencesSwitch(
                 action: self.togglePressure, state: self.pressureState,
                 with: selectView(action: #selector(self.changePressure), items: memoryPressureLevels, selected: self.pressure)
+            )),
+            PreferencesRow(localizedString("Memory pressure percent"), component: PreferencesSwitch(
+                action: self.togglePressurePercent, state: self.pressurePercentState, with: StepperInput(self.pressurePercent, callback: self.changePressurePercent)
             ))
         ]))
         
@@ -134,6 +142,11 @@ class Notifications: NotificationsWrapper {
             }
         }
         
+        if self.pressurePercentState {
+            let subtitle = localizedString("Memory pressure is", "\(value.pressurePercent)%")
+            self.checkDouble(id: self.pressurePercentID, value: Double(value.pressurePercent), threshold: Double(self.pressurePercent), title: title, subtitle: subtitle)
+        }
+
         if self.swapState {
             let value = Units(bytes: Int64(value.swap.used))
             let subtitle = "\(localizedString("Swap size")): \(value.getReadableMemory())"
@@ -169,6 +182,15 @@ class Notifications: NotificationsWrapper {
         Store.shared.set(key: "\(self.module)_notifications_pressure_value", value: self.pressure)
     }
     
+    @objc private func togglePressurePercent(_ sender: NSControl) {
+        self.pressurePercentState = controlState(sender)
+        Store.shared.set(key: "\(self.module)_notifications_pressurePercent_state", value: self.pressurePercentState)
+    }
+    @objc private func changePressurePercent(_ newValue: Int) {
+        self.pressurePercent = newValue
+        Store.shared.set(key: "\(self.module)_notifications_pressurePercent_value", value: self.pressurePercent)
+    }
+
     @objc private func toggleSwap(_ sender: NSControl) {
         self.swapState = controlState(sender)
         Store.shared.set(key: "\(self.module)_notifications_swap_state", value: self.swapState)
