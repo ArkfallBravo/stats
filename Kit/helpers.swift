@@ -1830,9 +1830,7 @@ public class StepperInput: NSStackView, NSTextFieldDelegate, PreferencesSwitchWi
         self.addArrangedSubview(self.stepperView)
         
         if units == nil {
-            if unit == "%" {
-                self.widthAnchor.constraint(equalToConstant: 80).isActive = true
-            }
+            self.widthAnchor.constraint(equalToConstant: 80).isActive = true
             if visibileUnit {
                 let symbol: NSTextField = LabelField(unit)
                 symbol.textColor = .textColor
