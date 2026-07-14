@@ -142,7 +142,7 @@ public class ProcessReader: Reader<[TopProcess]> {
         }
 
         let task = Process()
-        task.launchPath = "/usr/bin/top"
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/top")
         let metric = self.processMemoryMetric
         if self.combinedProcesses {
             task.arguments = ["-l", "1", "-o", metric, "-stats", "pid,command,\(metric)"]
