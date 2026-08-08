@@ -1591,6 +1591,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 9A141105229E721200D29793 /* Build configuration list for PBXNativeTarget "Stats" */;
 			buildPhases = (
+				3DE4D830D3F263DE10582E56 /* Verify DSTROOT symlink */,
 				9A1410F1229E721100D29793 /* Sources */,
 				9A1410F2229E721100D29793 /* Frameworks */,
 				9A1410F3229E721100D29793 /* Resources */,
@@ -2133,6 +2134,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "MARKETING_VERSION=$(/usr/libexec/PlistBuddy -c 'print :objects:9A141107229E721200D29793:buildSettings:MARKETING_VERSION' \"${SRCROOT}/Stats.xcodeproj/project.pbxproj\")\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $MARKETING_VERSION\" \"${SRCROOT}/Widgets/Supporting Files/Info.plist\"\nBUNDLE_VERSION=$(/usr/libexec/PlistBuddy -c \"Print CFBundleVersion\" \"${SRCROOT}/Stats/Supporting Files/Info.plist\")\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $BUNDLE_VERSION\" \"${SRCROOT}/Widgets/Supporting Files/Info.plist\"\n";
+		};
+		3DE4D830D3F263DE10582E56 /* Verify DSTROOT symlink */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Verify DSTROOT symlink";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" != \"Debug\" ]; then\n  exit 0\nfi\nif [ ! -L \"$HOME/.xcode-dstroot-root\" ] || [ \"$(readlink \"$HOME/.xcode-dstroot-root\")\" != \"/\" ]; then\n  echo \"error: $HOME/.xcode-dstroot-root is missing or not a symlink to /. Run: rm -rf '$HOME/.xcode-dstroot-root' && ln -sfn / '$HOME/.xcode-dstroot-root'\"\n  exit 1\nfi\n";
 		};
 		9A88E2672659002E00E2B7B0 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -3111,8 +3130,10 @@
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
+				DEPLOYMENT_LOCATION = YES;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = 7C45KQPPCV;
+				DSTROOT = "$(HOME)/.xcode-dstroot-root";
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3122,6 +3143,7 @@
 				INFOPLIST_FILE = "$(SRCROOT)/Stats/Supporting Files/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Stats;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INSTALL_PATH = /Applications;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
