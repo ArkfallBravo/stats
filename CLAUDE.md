@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Stats is a native macOS menu bar system monitor (Swift/AppKit/Cocoa), Xcode-project-based (`Stats.xcodeproj`, no SPM/CocoaPods package manifest). This is a personal fork of [exelban/stats](https://github.com/exelban/stats); `master` tracks upstream, and custom work lives on `my-changes` (merge `master` into `my-changes` to pick up upstream — don't rebase, see branch protection note below).
+Stats is a native macOS menu bar system monitor (Swift/AppKit/Cocoa), Xcode-project-based (`Stats.xcodeproj`, no SPM/CocoaPods package manifest). This is a personal fork of [exelban/stats](https://github.com/exelban/stats); `master` tracks upstream, and custom work lives on `my-changes` (merge `master` into `my-changes` to pick up upstream — don't rebase; see **Git workflow** below).
 
 ## Commands
 
@@ -34,6 +34,30 @@ Rules are in `.swiftlint.yml` at the repo root; CI runs this on every push/PR to
 
 ### Release packaging (Makefile)
 The `Makefile` targets (`archive`, `notarize`, `sign`, `verify`, `prepare-dmg`, `prepare-dSYM`) drive the full notarized-release pipeline and assume Apple Developer signing/notarization credentials (`AC_PASSWORD` keychain profile) — not relevant for local dev builds. `make smc` builds the standalone SMC helper CLI in `SMC/`; `make leveldb` builds the vendored LevelDB static lib used by `Kit/lldb`.
+
+## Git workflow
+
+Remotes: `upstream` = `exelban/stats` (the original), `origin` = the personal fork.
+`master` is a clean mirror of `upstream/master` — never commit to it directly, only
+fast-forward it. All custom work lives on `my-changes`. `my-changes` has branch
+protection that blocks force-pushes but allows merges, so upstream is picked up by
+**merging** `master` into `my-changes` — never rebase (a rebase would need a
+force-push and would be rejected).
+
+Sync cycle:
+```bash
+git fetch upstream
+git log --oneline master..upstream/master      # what's new
+git checkout master && git merge --ff-only upstream/master   # --ff-only guards against drift
+git push origin master
+git checkout my-changes && git merge master     # resolve conflicts if any
+# build, then:
+git push origin my-changes
+```
+
+The repo lives in iCloud Drive, so git commands occasionally fail transiently with
+odd errors (e.g. `fatal: stash failed`) while iCloud is syncing the working tree —
+retrying the same command generally succeeds, and it leaves no partial state behind.
 
 ## Architecture
 
