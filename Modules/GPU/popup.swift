@@ -16,8 +16,20 @@ internal class Popup: PopupWrapper {
     private let dashboardHeight: CGFloat = 90
     private let chartHeight: CGFloat = 90 + Constants.Popup.separatorHeight
     private let detailsHeight: CGFloat = (22*7) + Constants.Popup.separatorHeight
-    
+    private let processHeight: CGFloat = 22
+
     private let loadCache = PopupCache<GPU_Info>()
+
+    private var processes: ProcessesView? = nil
+    private var processesView: NSView? = nil
+    private var initializedProcesses: Bool = false
+
+    private var numberOfProcesses: Int {
+        Store.shared.int(key: "\(self.title)_processes", defaultValue: 8)
+    }
+    private var processesHeight: CGFloat {
+        (self.processHeight*CGFloat(self.numberOfProcesses)) + (self.numberOfProcesses == 0 ? 0 : Constants.Popup.separatorHeight + 22)
+    }
     
     private var usageCircle: PieChartView? = nil
     private var renderCircle: PieChartView? = nil
@@ -46,7 +58,10 @@ internal class Popup: PopupWrapper {
         self.addArrangedSubview(self.initDashboard())
         self.addArrangedSubview(self.initChart())
         self.addArrangedSubview(self.initDetails())
-        
+        #if arch(arm64)
+        self.addArrangedSubview(self.initProcesses())
+        #endif
+
         self.recalculateHeight()
     }
     
@@ -60,6 +75,10 @@ internal class Popup: PopupWrapper {
     
     public override func appear() {
         self.replay(self.loadCache, render: self.renderLoad)
+    }
+
+    public override func disappear() {
+        self.processes?.setLock(false)
     }
     
     private func recalculateHeight() {
@@ -136,10 +155,34 @@ internal class Popup: PopupWrapper {
         
         view.addSubview(separator)
         view.addSubview(container)
-        
+
         return view
     }
-    
+
+    private func initProcesses() -> NSView {
+        if self.numberOfProcesses == 0 {
+            let v = NSView()
+            self.processesView = v
+            return v
+        }
+
+        let view: NSView = NSView(frame: NSRect(x: 0, y: 0, width: self.frame.width, height: self.processesHeight))
+        view.heightAnchor.constraint(equalToConstant: view.bounds.height).isActive = true
+        let separator = separatorView(localizedString("Top processes"), origin: NSPoint(x: 0, y: self.processesHeight-Constants.Popup.separatorHeight), width: self.frame.width)
+        let container: ProcessesView = ProcessesView(
+            frame: NSRect(x: 0, y: 0, width: self.frame.width, height: separator.frame.origin.y),
+            values: [(localizedString("Usage"), nil)],
+            n: self.numberOfProcesses
+        )
+        self.processes = container
+
+        view.addSubview(separator)
+        view.addSubview(container)
+
+        self.processesView = view
+        return view
+    }
+
     // MARK: - Callback
     
     public func loadCallback(_ value: GPU_Info) {
@@ -183,7 +226,42 @@ internal class Popup: PopupWrapper {
         
         self.chart?.display()
     }
-    
+
+    public func processCallback(_ list: [TopProcess]?) {
+        guard let list else { return }
+
+        DispatchQueue.main.async(execute: {
+            if !(self.window?.isVisible ?? false) && self.initializedProcesses {
+                return
+            }
+            if list.count != self.processes?.count {
+                self.processes?.clear()
+            }
+
+            for i in 0..<list.count {
+                let process = list[i]
+                self.processes?.set(i, process, ["\(process.usage)%"])
+            }
+
+            self.initializedProcesses = true
+        })
+    }
+
+    public func numberOfProcessesUpdated() {
+        if self.processes?.count == self.numberOfProcesses {
+            return
+        }
+
+        DispatchQueue.main.async(execute: {
+            self.processesView?.removeFromSuperview()
+            self.processesView = nil
+            self.processes = nil
+            self.addArrangedSubview(self.initProcesses())
+            self.initializedProcesses = false
+            self.recalculateHeight()
+        })
+    }
+
     // MARK: - Settings
     
     public override func settings() -> NSView? {
