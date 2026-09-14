@@ -786,12 +786,7 @@ public struct TopProcess: Codable, Process_p {
     public var name: String
     public var usage: Double
     public var icon: NSImage {
-        get {
-            if let app = NSRunningApplication(processIdentifier: pid_t(self.pid)), let icon = app.icon {
-                return icon
-            }
-            return Constants.defaultProcessIcon
-        }
+        get { ProcessIconCache.shared.icon(for: self.pid) }
     }
     
     public init(pid: Int, name: String, usage: Double) {
@@ -1193,15 +1188,38 @@ public class SMCHelper {
         helper.version { installedHelperVersion in
             guard installedHelperVersion != helperVersion else { return }
             print("new version of SMC helper is detected (\(installedHelperVersion) -> \(helperVersion)), going to update...")
-            self.uninstall(silent: true)
-            self.install { state in
-                if case .enabled = state {
-                    print("the new version of SMC helper was successfully installed")
-                } else {
-                    print("error when installing a new version of the SMC helper")
-                }
+            self.reinstall()
+        }
+    }
+    
+    private func reinstall() {
+        let completion: (SMCHelperInstallState) -> Void = { state in
+            if case .enabled = state {
+                print("the new version of SMC helper was successfully installed")
+            } else {
+                print("error when installing a new version of the SMC helper")
             }
         }
+        
+        if #available(macOS 13, *) {
+            if let count = SMC.shared.getValue("FNum") {
+                for i in 0..<Int(count) {
+                    self.setFanMode(i, mode: 0)
+                }
+            }
+            SMAppService.daemon(plistName: self.plistName).unregister { error in
+                if let error {
+                    print("failed to unregister SMC helper daemon: \(error.localizedDescription)")
+                }
+                self.connection?.invalidate()
+                self.connection = nil
+                self.install(completion: completion)
+            }
+            return
+        }
+        
+        self.uninstall(silent: true)
+        self.install(completion: completion)
     }
     
     public func install(completion: @escaping (_ state: SMCHelperInstallState) -> Void) {
@@ -2050,22 +2068,40 @@ public class VerticallyCenteredTextFieldCell: NSTextFieldCell {
     }
 }
 
-public class CPUeStressTest {
+public class CPUStressTest {
     public var isRunning: Bool = false
     
+    private let type: coreType
     private var workers: [DispatchWorkItem] = []
-    private let queue = DispatchQueue.global(qos: .background)
+    private let queue: DispatchQueue
+    private let qos: qos_class_t
     
-    public init() {}
+    public init(type: coreType) {
+        self.type = type
+        switch type {
+        case .efficiency:
+            self.queue = DispatchQueue.global(qos: .background)
+            self.qos = QOS_CLASS_BACKGROUND
+        default:
+            self.queue = DispatchQueue.global(qos: .userInteractive)
+            self.qos = QOS_CLASS_USER_INTERACTIVE
+        }
+    }
     
     public func start() {
         guard !self.isRunning else { return }
         self.isRunning = true
         
-        let efficientCoreCount: Int = Int(SystemKit.shared.device.info.cpu?.eCores ?? 2)
+        let cpu = SystemKit.shared.device.info.cpu
+        let count: Int
+        switch self.type {
+        case .efficiency: count = Int(cpu?.eCores ?? 2)
+        case .super: count = Int(cpu?.sCores ?? 0)
+        default: count = Int(cpu?.pCores ?? 4)
+        }
         self.workers.removeAll()
         
-        for _ in 0..<efficientCoreCount {
+        for _ in 0..<count {
             let worker = DispatchWorkItem { [weak self] in
                 self?.test()
             }
@@ -2081,48 +2117,7 @@ public class CPUeStressTest {
     }
     
     private func test() {
-        pthread_set_qos_class_self_np(QOS_CLASS_BACKGROUND, 0)
-        var x: Double = 1.0
-        while self.isRunning {
-            x = sin(x) + cos(x)
-            if x > 100000 { x = 1.0 }
-            OSMemoryBarrier()
-        }
-    }
-}
-
-public class CPUpStressTest {
-    public var isRunning = false
-    
-    private var workers: [DispatchWorkItem] = []
-    private let queue = DispatchQueue.global(qos: .userInteractive)
-    
-    public init() {}
-    
-    public func start() {
-        guard !self.isRunning else { return }
-        self.isRunning = true
-        
-        let performanceCoreCount: Int = Int(SystemKit.shared.device.info.cpu?.pCores ?? 4)
-        self.workers.removeAll()
-        
-        for _ in 0..<performanceCoreCount {
-            let worker = DispatchWorkItem { [weak self] in
-                self?.test()
-            }
-            self.workers.append(worker)
-            self.queue.async(execute: worker)
-        }
-    }
-    
-    public func stop() {
-        self.isRunning = false
-        self.workers.forEach { $0.cancel() }
-        self.workers.removeAll()
-    }
-    
-    private func test() {
-        pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0)
+        pthread_set_qos_class_self_np(self.qos, 0)
         var x: Double = 1.0
         while self.isRunning {
             x = sin(x) + cos(x)
