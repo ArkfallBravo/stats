@@ -17,6 +17,8 @@ import WebKit
 import Metal
 import IOKit.pwr_mgt
 
+public let machHostPort: mach_port_t = mach_host_self()
+
 public struct LaunchAtLogin {
     private static let id = "\(Bundle.main.bundleIdentifier!).LaunchAtLogin"
     
@@ -178,12 +180,7 @@ public struct Units {
     }
     
     public func getReadableMemory(style: ByteCountFormatter.CountStyle = .file) -> String {
-        let formatter: ByteCountFormatter = ByteCountFormatter()
-        formatter.countStyle = style
-        formatter.includesUnit = true
-        formatter.isAdaptive = true
-        
-        var value = formatter.string(fromByteCount: Int64(self.bytes))
+        var value = FormatterCache.shared.readableMemory(Int64(self.bytes), style: style)
         if let idx = value.lastIndex(of: ",") {
             value.replaceSubrange(idx...idx, with: ".")
         }
@@ -202,24 +199,19 @@ public struct Units {
     }
     
     private func formatSpeedValue(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.decimalSeparator = "."
-        formatter.usesGroupingSeparator = false
-        formatter.minimumFractionDigits = 0
-        
+        let maximumFractionDigits: Int
         switch value {
         case 0:
-            formatter.maximumFractionDigits = 0
+            maximumFractionDigits = 0
         case ..<10:
-            formatter.maximumFractionDigits = 2
+            maximumFractionDigits = 2
         case ..<100:
-            formatter.maximumFractionDigits = 1
+            maximumFractionDigits = 1
         default:
-            formatter.maximumFractionDigits = 0
+            maximumFractionDigits = 0
         }
         
-        return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
+        return FormatterCache.shared.decimal(value, maximumFractionDigits: maximumFractionDigits) ?? String(format: "%.2f", value)
     }
 }
 
@@ -675,9 +667,12 @@ public func isNewestVersion(currentVersion: String, latestVersion: String) -> Bo
     
     let currentArray = currentNumber.condenseWhitespace().split(separator: ".")
     let latestArray = latestNumber.condenseWhitespace().split(separator: ".")
+    let component: ([Substring], Int) -> Int = { arr, i in
+        arr.indices.contains(i) ? Int(arr[i]) ?? 0 : 0
+    }
     
-    var current = Version(major: Int(currentArray[0]) ?? 0, minor: Int(currentArray[1]) ?? 0, patch: Int(currentArray[2]) ?? 0)
-    var latest = Version(major: Int(latestArray[0]) ?? 0, minor: Int(latestArray[1]) ?? 0, patch: Int(latestArray[2]) ?? 0)
+    var current = Version(major: component(currentArray, 0), minor: component(currentArray, 1), patch: component(currentArray, 2))
+    var latest = Version(major: component(latestArray, 0), minor: component(latestArray, 1), patch: component(latestArray, 2))
     
     if let patch = currentArray.last, patch.contains("-") {
         let arr = patch.split(separator: "-")
@@ -914,10 +909,26 @@ public func localizedString(_ key: String, _ params: String..., comment: String 
 }
 
 public extension UnitTemperature {
+    private static let systemLock = NSLock()
+    private static var systemCache: UnitTemperature? = nil
+    private static let localeObserver: NSObjectProtocol = NotificationCenter.default.addObserver(forName: NSLocale.currentLocaleDidChangeNotification, object: nil, queue: nil) { _ in
+        UnitTemperature.systemLock.lock()
+        UnitTemperature.systemCache = nil
+        UnitTemperature.systemLock.unlock()
+    }
+    
     static var system: UnitTemperature {
+        _ = self.localeObserver
+        self.systemLock.lock()
+        defer { self.systemLock.unlock() }
+        if let cached = self.systemCache {
+            return cached
+        }
         let measureFormatter = MeasurementFormatter()
         let measurement = Measurement(value: 0, unit: UnitTemperature.celsius)
-        return measureFormatter.string(from: measurement).hasSuffix("C") ? .celsius : .fahrenheit
+        let unit: UnitTemperature = measureFormatter.string(from: measurement).hasSuffix("C") ? .celsius : .fahrenheit
+        self.systemCache = unit
+        return unit
     }
     
     static var current: UnitTemperature {
@@ -933,18 +944,10 @@ public extension UnitTemperature {
 }
 
 public func temperature(_ value: Double, defaultUnit: UnitTemperature = UnitTemperature.celsius, fractionDigits: Int = 0) -> String {
-    let formatter = MeasurementFormatter()
-    formatter.locale = Locale.init(identifier: "en_US")
-    formatter.numberFormatter.maximumFractionDigits = fractionDigits
-    if fractionDigits != 0 {
-        formatter.numberFormatter.minimumFractionDigits = fractionDigits
-    }
-    formatter.unitOptions = .providedUnit
-    
     var measurement = Measurement(value: value, unit: defaultUnit)
     measurement.convert(to: UnitTemperature.current)
     
-    return formatter.string(from: measurement)
+    return FormatterCache.shared.temperature(measurement, fractionDigits: fractionDigits)
 }
 
 public func sysctlByName(_ name: String) -> Int64 {
@@ -1459,10 +1462,8 @@ public class EmptyView: NSStackView {
 }
 
 internal func saveNSStatusItemPosition(id: String) {
-    let position = Store.shared.int(key: "NSStatusItem Preferred Position \(id)", defaultValue: -1)
-    if position != -1 {
-        Store.shared.set(key: "NSStatusItem Restore Position \(id)", value: position)
-    }
+    guard let position = UserDefaults.standard.object(forKey: "NSStatusItem Preferred Position \(id)") as? NSNumber else { return }
+    Store.shared.set(key: "NSStatusItem Restore Position \(id)", value: position.intValue)
 }
 internal func restoreNSStatusItemPosition(id: String) {
     let prevPosition = Store.shared.int(key: "NSStatusItem Restore Position \(id)", defaultValue: -1)
