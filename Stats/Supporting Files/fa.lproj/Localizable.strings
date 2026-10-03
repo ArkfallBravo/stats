@@ -412,6 +412,8 @@
 "Sensor to show" = "حسگر برای نمایش"; // gemma4:31b
 
 // Network
+"Allow access to Wi-Fi details" = "دسترسی به جزئیات Wi-Fi را مجاز کنید";
+"Open Location Settings" = "باز کردن تنظیمات موقعیت";
 "Uploading" = "آپلود";
 "Downloading" = "دانلود";
 "Public IP" = "آی پی عمومی";

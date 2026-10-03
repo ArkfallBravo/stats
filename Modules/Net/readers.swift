@@ -13,6 +13,7 @@ import Cocoa
 import Kit
 import SystemConfiguration
 import CoreWLAN
+import CoreLocation
 
 // swiftlint:disable control_statement
 extension CWPHYMode: @retroactive CustomStringConvertible {
@@ -98,7 +99,12 @@ extension CWChannel {
     }
 }
 
-internal class UsageReader: Reader<Network_Usage>, CWEventDelegate {
+func isUsableSSID(_ ssid: String?) -> Bool {
+    guard let ssid else { return false }
+    return !ssid.isEmpty && ssid != "<redacted>"
+}
+
+internal class UsageReader: Reader<Network_Usage>, CWEventDelegate, CLLocationManagerDelegate {
     private var reachability: Reachability = Reachability(start: true)
     private let variablesQueue = DispatchQueue(label: "eu.exelban.NetworkUsageReader")
     private var _usage: Network_Usage = Network_Usage()
@@ -201,6 +207,8 @@ internal class UsageReader: Reader<Network_Usage>, CWEventDelegate {
     private let wifiClient = CWWiFiClient.shared()
     private var listeningForWifiEvents: Bool = false
     
+    private var locationManager: CLLocationManager?
+    
     private var lastDetailsReadTS: Date = .distantPast
     
     private let detailsQueue = DispatchQueue(label: "eu.exelban.NetworkDetailsReader")
@@ -222,6 +230,7 @@ internal class UsageReader: Reader<Network_Usage>, CWEventDelegate {
         self.reachability.unreachable = { [weak self] in
             guard let self else { return }
             if self.active {
+                self.resetWiFiDetails()
                 self.usage.reset()
                 self.callback(self.usage)
             }
@@ -247,6 +256,7 @@ internal class UsageReader: Reader<Network_Usage>, CWEventDelegate {
     }
     
     public override func terminate() {
+        self.resetWiFiDetails()
         self.reachability.stop()
         self.reachability.reachable = {}
         self.reachability.unreachable = {}
@@ -258,10 +268,15 @@ internal class UsageReader: Reader<Network_Usage>, CWEventDelegate {
         super.start()
         self.wifiClient.delegate = self
         self.startListeningForWifiEvents()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.active else { return }
+            self.observeWiFiLocationAuthorization()
+        }
     }
     
     public override func stop() {
         super.stop()
+        self.resetWiFiDetails()
         self.stopListeningForWifiEvents()
         self.wifiClient.delegate = nil
     }
@@ -272,6 +287,7 @@ internal class UsageReader: Reader<Network_Usage>, CWEventDelegate {
         let interfaceID = self.interfaceID
         if interfaceID != self.lastInterfaceID {
             self.lastInterfaceID = interfaceID
+            self.resetWiFiDetails()
             self.usage.bandwidth = Bandwidth()
             self.lastDetailsReadTS = .distantPast
         }
@@ -480,7 +496,7 @@ internal class UsageReader: Reader<Network_Usage>, CWEventDelegate {
             self.usage.wifiDetails.reset()
         }
         
-        if self.usage.wifiDetails.ssid != nil && (self.usage.wifiDetails.ssid == "" || self.usage.wifiDetails.ssid == "<redacted>") {
+        if !isUsableSSID(self.usage.wifiDetails.ssid) {
             self.usage.wifiDetails.ssid = nil
         }
         
@@ -493,9 +509,13 @@ internal class UsageReader: Reader<Network_Usage>, CWEventDelegate {
     
     private func getWiFiDetails() {
         guard self.usage.connectionType == .wifi else { return }
+        let interfaceID = self.interfaceID
         
-        if let interface = CWWiFiClient.shared().interface(withName: self.interfaceID) {
-            if let ssid = interface.ssid() {
+        if let interface = CWWiFiClient.shared().interface(withName: interfaceID) {
+            if let ssid = interface.ssid(), isUsableSSID(ssid) {
+                if ssid != self.usage.wifiDetails.ssid {
+                    self.resetWiFiDetails()
+                }
                 self.usage.wifiDetails.ssid = ssid
             }
             if let bssid = interface.bssid() {
@@ -520,33 +540,67 @@ internal class UsageReader: Reader<Network_Usage>, CWEventDelegate {
                 self.usage.wifiDetails.channelNumber = ch.channelNumber.description
             }
         }
-        
-        if self.usage.wifiDetails.ssid == nil || self.usage.wifiDetails.ssid == "" {
-            guard let res = self.systemProfilerAirport(timeout: 5) else {
-                return
-            }
-            do {
-                if let json = try JSONSerialization.jsonObject(with: Data(res.utf8), options: []) as? [String: Any] {
-                    if let arr = json["SPAirPortDataType"] as? [[String: Any]],
-                       let airport = arr.first(where: { $0["spairport_airport_interfaces"] != nil }),
-                       let interfaces = airport["spairport_airport_interfaces"] as? [[String: Any]],
-                       let interface = interfaces.first(where: { $0["_name"] as? String == self.interfaceID }),
-                       let obj = interface["spairport_current_network_information"] as? [String: Any] {
-                        
-                        self.usage.wifiDetails.ssid = obj["_name"] as? String
-                        self.usage.wifiDetails.countryCode = obj["spairport_network_country_code"] as? String
-                        self.usage.wifiDetails.standard = obj["spairport_network_phymode"] as? String
-                    }
-                }
-            } catch let err as NSError {
-                error("error to parse system_profiler SPAirPortDataType: \(err.localizedDescription)")
-                return
+    }
+    
+    private func observeWiFiLocationAuthorization() {
+        if self.locationManager == nil {
+            let manager = CLLocationManager()
+            self.locationManager = manager
+            manager.delegate = self
+        }
+        if let manager = self.locationManager {
+            self.locationManagerDidChangeAuthorization(manager)
+        }
+    }
+    
+    public func requestWiFiLocationAuthorization() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.active,
+                  self.wifiClient.interfaces()?.contains(where: { $0.interfaceName == self.interfaceID }) == true else { return }
+            self.observeWiFiLocationAuthorization()
+            guard let manager = self.locationManager else { return }
+            switch manager.authorizationStatus {
+            case .notDetermined:
+                manager.requestWhenInUseAuthorization()
+            case .denied, .restricted:
+                self.openWiFiLocationSettings()
+            default:
+                break
             }
         }
     }
     
-    private func systemProfilerAirport(timeout: TimeInterval) -> String? {
-        return process(path: "/usr/sbin/system_profiler", arguments: ["SPAirPortDataType", "-json"], timeout: timeout)
+    private func openWiFiLocationSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let authorization: WiFiLocationAuthorization
+        switch manager.authorizationStatus {
+        case .notDetermined: authorization = .notDetermined
+        case .authorizedAlways, .authorizedWhenInUse: authorization = .authorized
+        default: authorization = .denied
+        }
+        self.detailsQueue.async { [weak self] in
+            guard let self, self.active else { return }
+            let changed = self.variablesQueue.sync { () -> Bool in
+                guard self._usage.wifiLocationAuthorization != authorization else { return false }
+                self._usage.wifiLocationAuthorization = authorization
+                return true
+            }
+            guard changed else { return }
+            self.resetWiFiDetails()
+            self.getWiFiDetails()
+            self.callback(self.usage)
+        }
+    }
+    
+    private func resetWiFiDetails() {
+        self.variablesQueue.sync {
+            self._usage.wifiDetails.reset()
+        }
     }
     
     private func getLocalIP(_ pointer: UnsafeMutablePointer<ifaddrs>) {
@@ -711,6 +765,8 @@ internal class UsageReader: Reader<Network_Usage>, CWEventDelegate {
     }
     
     public func ssidDidChangeForWiFiInterface(withName interfaceName: String) {
+        guard interfaceName == self.interfaceID else { return }
+        self.resetWiFiDetails()
         self.getWiFiDetails()
     }
 }

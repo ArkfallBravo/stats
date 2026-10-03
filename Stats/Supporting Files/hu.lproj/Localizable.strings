@@ -412,6 +412,8 @@
 "Sensor to show" = "Megmutatandó szenzor"; // gemma4:31b
 
 // Network
+"Allow access to Wi-Fi details" = "Wi-Fi részletek elérésének engedélyezése";
+"Open Location Settings" = "Helymeghatározási beállítások megnyitása";
 "Uploading" = "Feltöltés";
 "Downloading" = "Letöltés";
 "Public IP" = "Nyilvános IP";

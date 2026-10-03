@@ -412,6 +412,8 @@
 "Sensor to show" = "Senzor za prikaz"; // gemma4:31b
 
 // Network
+"Allow access to Wi-Fi details" = "Dozvoli pristup detaljima Wi-Fi-ja";
+"Open Location Settings" = "Otvori postavke lokacije";
 "Uploading" = "Slanje";
 "Downloading" = "Primanje";
 "Public IP" = "Javni IP";

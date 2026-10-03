@@ -412,6 +412,8 @@
 "Sensor to show" = "Senzor za prikaz";
 
 // Network
+"Allow access to Wi-Fi details" = "Dovoli dostop do podrobnosti Wi-Fi";
+"Open Location Settings" = "Odpri nastavitve lokacije";
 "Uploading" = "Oddajanje";
 "Downloading" = "Prenašanje";
 "Public IP" = "Javni IP";

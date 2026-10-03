@@ -412,6 +412,8 @@
 "Sensor to show" = "Näytettävä anturi"; // gemma4:31b
 
 // Network
+"Allow access to Wi-Fi details" = "Salli pääsy Wi-Fi-tietoihin";
+"Open Location Settings" = "Avaa sijaintiasetukset";
 "Uploading" = "Lähetys";
 "Downloading" = "Lataus";
 "Public IP" = "Julkinen IP";

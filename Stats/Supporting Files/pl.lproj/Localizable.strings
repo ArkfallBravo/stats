@@ -412,6 +412,8 @@
 "Sensor to show" = "Aktywny czujnik";
 
 // Network
+"Allow access to Wi-Fi details" = "Zezwól na dostęp do szczegółów Wi-Fi";
+"Open Location Settings" = "Otwórz ustawienia lokalizacji";
 "Uploading" = "Wysyłanie";
 "Downloading" = "Pobieranie";
 "Public IP" = "Publiczny IP";

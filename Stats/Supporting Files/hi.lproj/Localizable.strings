@@ -412,6 +412,8 @@
 "Sensor to show" = "दिखाने के लिए सेंसर"; // gemma4:31b
 
 // Network
+"Allow access to Wi-Fi details" = "Wi-Fi विवरण तक पहुंच की अनुमति दें";
+"Open Location Settings" = "लोकेशन सेटिंग्स खोलें";
 "Uploading" = "अपलोड";
 "Downloading" = "डाउनलोड";
 "Public IP" = "सार्वजनिक आईपी";

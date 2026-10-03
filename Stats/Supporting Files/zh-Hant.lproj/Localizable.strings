@@ -412,6 +412,8 @@
 "Sensor to show" = "要顯示的感知器";
 
 // Network
+"Allow access to Wi-Fi details" = "允許存取 Wi-Fi 詳細資訊";
+"Open Location Settings" = "打開位置設定";
 "Uploading" = "上傳";
 "Downloading" = "下載";
 "Public IP" = "公用IP";

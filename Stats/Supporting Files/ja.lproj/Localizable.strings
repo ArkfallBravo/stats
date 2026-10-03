@@ -412,6 +412,8 @@
 "Sensor to show" = "表示するセンサー"; // gemma4:31b
 
 // Network
+"Allow access to Wi-Fi details" = "Wi-Fi 詳細へのアクセスを許可";
+"Open Location Settings" = "位置情報の設定を開く";
 "Uploading" = "送信";
 "Downloading" = "受信";
 "Public IP" = "パブリック IP";

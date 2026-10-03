@@ -412,6 +412,8 @@
 "Sensor to show" = "Sensor a mostrar"; // gemma4:31b
 
 // Network
+"Allow access to Wi-Fi details" = "Permet l'accés als detalls de Wi-Fi";
+"Open Location Settings" = "Obre la configuració de la ubicació";
 "Uploading" = "Carregant";
 "Downloading" = "Baixant";
 "Public IP" = "IP Pública";

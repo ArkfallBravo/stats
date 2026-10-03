@@ -412,6 +412,8 @@
 "Sensor to show" = "Активный датчик";
 
 // Network
+"Allow access to Wi-Fi details" = "Разрешить доступ к деталям Wi-Fi";
+"Open Location Settings" = "Открыть настройки геолокации";
 "Uploading" = "Выгрузка";
 "Downloading" = "Загрузка";
 "Public IP" = "Публичный IP";

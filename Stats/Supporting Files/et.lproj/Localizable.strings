@@ -412,6 +412,8 @@
 "Sensor to show" = "Sensor näitamiseks";
 
 // Network
+"Allow access to Wi-Fi details" = "Luba ligipääs Wi-Fi üksikasjadele";
+"Open Location Settings" = "Ava asukoha seaded";
 "Uploading" = "Üleslaadimine";
 "Downloading" = "Allalaadimine";
 "Public IP" = "Avalik IP";

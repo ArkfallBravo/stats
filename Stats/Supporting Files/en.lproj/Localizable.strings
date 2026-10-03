@@ -412,6 +412,8 @@
 "Sensor to show" = "Sensor to show";
 
 // Network
+"Allow access to Wi-Fi details" = "Allow access to Wi-Fi details";
+"Open Location Settings" = "Open Location Settings";
 "Uploading" = "Upload";
 "Downloading" = "Download";
 "Public IP" = "Public IP";

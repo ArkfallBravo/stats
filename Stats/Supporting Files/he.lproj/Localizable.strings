@@ -412,6 +412,8 @@
 "Sensor to show" = "חיישן להצגה"; // translategemma:4b
 
 // Network
+"Allow access to Wi-Fi details" = "הרש/י גישה לפרטי Wi-Fi";
+"Open Location Settings" = "פתח/י הגדרות מיקום";
 "Uploading" = "העלאה";
 "Downloading" = "הורדה";
 "Public IP" = "כתובת רשת ציבורית";

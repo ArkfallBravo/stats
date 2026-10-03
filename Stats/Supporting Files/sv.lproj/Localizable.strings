@@ -412,6 +412,8 @@
 "Sensor to show" = "Sensor att visa"; // gemma4:31b
 
 // Network
+"Allow access to Wi-Fi details" = "Tillåt åtkomst till Wi-Fi detaljer";
+"Open Location Settings" = "Öppna lägesinställningar";
 "Uploading" = "Uppladdning";
 "Downloading" = "Nedladdning";
 "Public IP" = "Publik IP";

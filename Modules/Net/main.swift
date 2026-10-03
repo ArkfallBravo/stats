@@ -12,7 +12,6 @@
 import Cocoa
 import Kit
 import SystemConfiguration
-import WidgetKit
 
 public enum Network_t: String, Codable {
     case wifi
@@ -72,6 +71,10 @@ public struct Bandwidth: Codable {
     var download: Int64 = 0
 }
 
+enum WiFiLocationAuthorization: String, Codable {
+    case notDetermined, denied, authorized
+}
+
 public struct Network_Usage: Codable, RemoteType {
     var bandwidth: Bandwidth = Bandwidth()
     var total: Bandwidth = Bandwidth()
@@ -86,6 +89,7 @@ public struct Network_Usage: Codable, RemoteType {
     var status: Bool = false
     
     var wifiDetails: Network_wifi = Network_wifi()
+    var wifiLocationAuthorization: WiFiLocationAuthorization?
     
     mutating func reset() {
         self.bandwidth = Bandwidth()
@@ -185,6 +189,9 @@ public class Network: Module {
         
         self.usageReader = UsageReader(.network) { [weak self] value in
             self?.usageCallback(value)
+        }
+        self.popupView.locationPermissionAction = { [weak self] in
+            self?.usageReader?.requestWiFiLocationAuthorization()
         }
         self.processReader = ProcessReader(.network) { [weak self] value in
             if let list = value {
@@ -340,10 +347,7 @@ public class Network: Module {
         }
         
         if self.systemWidgetsUpdatesState {
-            if isWidgetActive(self.userDefaults, [Network_entry.kind]), let blobData = try? JSONEncoder().encode(raw) {
-                self.userDefaults?.set(blobData, forKey: "Network@UsageReader")
-            }
-            WidgetCenter.shared.reloadTimelines(ofKind: Network_entry.kind)
+            SystemWidgetUpdates.shared.update(raw, key: "Network@UsageReader", kinds: [Network_entry.kind], defaults: self.userDefaults)
         }
     }
     

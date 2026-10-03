@@ -412,6 +412,8 @@
 "Sensor to show" = "காட்ட உணரி";
 
 // Network
+"Allow access to Wi-Fi details" = "Wi-Fi விவரங்களுக்கான அணுகலை அனுமதி";
+"Open Location Settings" = "இட அமைப்புகளைத் திற";
 "Uploading" = "பதிவேற்றம்";
 "Downloading" = "பதிவிறக்கம்";
 "Public IP" = "பொது IP"; // qwen3.8:27b

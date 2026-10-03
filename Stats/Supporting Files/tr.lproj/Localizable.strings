@@ -412,6 +412,8 @@
 "Sensor to show" = "Gösterilecek sensör";
 
 // Network
+"Allow access to Wi-Fi details" = "Wi-Fi ayrıntılarına erişime izin ver";
+"Open Location Settings" = "Konum ayarlarını aç";
 "Uploading" = "Yükleme";
 "Downloading" = "İndirme";
 "Public IP" = "Genel IP";

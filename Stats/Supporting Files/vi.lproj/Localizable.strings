@@ -412,6 +412,8 @@
 "Sensor to show" = "Cảm biến hiển thị";
 
 // Network
+"Allow access to Wi-Fi details" = "Cho phép truy cập chi tiết Wi-Fi";
+"Open Location Settings" = "Mở cài đặt vị trí";
 "Uploading" = "Đang tải lên";
 "Downloading" = "Đang tải xuống";
 "Public IP" = "IP công khai";
