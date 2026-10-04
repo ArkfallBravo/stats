@@ -79,6 +79,20 @@ class RAM: XCTestCase {
         XCTAssertEqual(process.usage, 658 * Double(1000 * 1000))
     }
 
+    func testProcessReader_parsePSLine() throws
+    {
+        let process = ProcessReader.parsePSLine("  329  48812 /System/Library/CoreServices/Finder.app/Contents/MacOS/Finder")
+        XCTAssertEqual(process?.pid, 329)
+        XCTAssertEqual(process?.name, "/System/Library/CoreServices/Finder.app/Contents/MacOS/Finder")
+        XCTAssertEqual(process?.usage, 48812 * 1024)
+
+        XCTAssertEqual(ProcessReader.parsePSLine("7163 1024 AutoCAD LT 2023")?.name, "AutoCAD LT 2023")
+        XCTAssertNil(ProcessReader.parsePSLine("  412      0 zombie"))
+        XCTAssertNil(ProcessReader.parsePSLine("abc 1024 name"))
+        XCTAssertNil(ProcessReader.parsePSLine("412 1024"))
+        XCTAssertNil(ProcessReader.parsePSLine(""))
+    }
+
     func testUsageReader_compressionPercent() throws
     {
         XCTAssertEqual(UsageReader.compressionPercent(compressedPages: 0, availablePages: 0), 0)

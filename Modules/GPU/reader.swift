@@ -431,13 +431,14 @@ public class ProcessReader: Reader<[TopProcess]> {
             elapsed: now.timeIntervalSince(previousDate)
         )
         let processes = usage.filter { $0.value > 0 }
-            .map { (pid, value) in
+            .sorted { $0.value > $1.value }
+            .prefix(self.numberOfProcesses)
+            .map
+            { (pid, value) in
                 TopProcess(pid: pid, name: self.resolveName(pid: pid, fallback: aggregated[pid]?.name ?? ""), usage: value)
             }
-            .sorted { $0.usage > $1.usage }
-            .prefix(self.numberOfProcesses)
 
-        self.callback(Array(processes))
+        self.callback(processes)
     }
 
     // Sums GPU time per pid across a process's Metal user clients.

@@ -200,126 +200,73 @@ public class ProcessReader: Reader<[TopProcess]> {
             return
         }
         
-        var processGroups: [String: [TopProcess]] = [:]
-        for process in processes {
-            let responsiblePid = ProcessReader.getResponsiblePid(process.pid)
-            let groupKey = "\(responsiblePid)"
-            
-            if processGroups[groupKey] != nil {
-                processGroups[groupKey]!.append(process)
-            } else {
-                processGroups[groupKey] = [process]
-            }
-        }
-        
-        var result: [TopProcess] = []
-        for (_, processes) in processGroups {
-            let totalUsage = processes.reduce(0) { $0 + $1.usage }
-            let firstProcess = processes.first!
-            let name: String
-            
-            if let app = NSRunningApplication(processIdentifier: pid_t(ProcessReader.getResponsiblePid(firstProcess.pid))),
-               let appName = app.localizedName {
-                name = appName
-            } else {
-                name = firstProcess.name
-            }
-            
-            result.append(TopProcess(
-                pid: ProcessReader.getResponsiblePid(firstProcess.pid),
-                name: name,
-                usage: totalUsage
-            ))
-        }
-        
-        result.sort { $0.usage > $1.usage }
-        self.callback(Array(result.prefix(self.numberOfProcesses)))
+        self.callback(self.combine(processes))
     }
     
-    /// Reads resident set size (real memory) for all processes via `ps`,
-    /// which matches Activity Monitor's "Real Memory" column.
-    private func readViaPS() {
-        let task = Process()
-        task.launchPath = "/bin/ps"
+    // Reads each process's resident memory via `ps`, matching Activity Monitor's "Real Memory" column.
+    private func readViaPS()
+    {
         // pid=,rss=,comm= suppresses headers; rss is in KB; comm is the basename
-        task.arguments = ["-A", "-o", "pid=,rss=,comm="]
-
-        let outputPipe = Pipe()
-        let errorPipe = Pipe()
-        defer {
-            outputPipe.fileHandleForReading.closeFile()
-            errorPipe.fileHandleForReading.closeFile()
-        }
-        task.standardOutput = outputPipe
-        task.standardError = errorPipe
-
-        do {
-            try task.run()
-        } catch let err {
-            error("ps(): \(err.localizedDescription)", log: self.log)
+        guard let output = process(path: "/bin/ps", arguments: ["-A", "-o", "pid=,rss=,comm="]) else
+        {
             return
         }
 
-        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-        guard let output = String(data: outputData, encoding: .utf8), !output.isEmpty else { return }
-
         var processes: [TopProcess] = []
-        output.enumerateLines { line, _ in
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            // Fields: pid  rss  comm (comm may contain spaces in edge cases)
-            let parts = trimmed.split(separator: " ", maxSplits: 2, omittingEmptySubsequences: true)
-            guard parts.count >= 3,
-                  let pid = Int(parts[0]),
-                  let rssKB = Double(parts[1]),
-                  rssKB > 0 else { return }
-
-            let rawName = String(parts[2])
-            var name = rawName
-            if let app = NSRunningApplication(processIdentifier: pid_t(pid)), let n = app.localizedName {
-                name = n
+        output.enumerateLines
+        { line, _ in
+            if let process = ProcessReader.parsePSLine(line)
+            {
+                processes.append(process)
             }
-            // ps rss is in KB; convert to bytes to match TopProcess convention
-            processes.append(TopProcess(pid: pid, name: name, usage: rssKB * 1024))
+        }
+
+        if self.combinedProcesses
+        {
+            self.callback(self.combine(processes))
+            return
         }
 
         processes.sort { $0.usage > $1.usage }
+        self.callback(processes.prefix(self.numberOfProcesses).map
+        { process in
+            let appName = NSRunningApplication(processIdentifier: pid_t(process.pid))?.localizedName
+            return TopProcess(pid: process.pid, name: appName ?? process.name, usage: process.usage)
+        })
+    }
 
-        if !self.combinedProcesses {
-            self.callback(Array(processes.prefix(self.numberOfProcesses)))
-            return
+    // Parses one `pid rss comm` line from `ps`, returning nil for malformed or zero-RSS lines.
+    public static func parsePSLine(_ line: String) -> TopProcess?
+    {
+        // comm may contain spaces in edge cases, so split at most twice
+        let parts = line.trimmingCharacters(in: .whitespaces).split(separator: " ", maxSplits: 2, omittingEmptySubsequences: true)
+        guard parts.count >= 3, let pid = Int(parts[0]), let rssKB = Double(parts[1]), rssKB > 0 else
+        {
+            return nil
         }
+        // ps rss is in KB; convert to bytes to match TopProcess convention
+        return TopProcess(pid: pid, name: String(parts[2]), usage: rssKB * 1024)
+    }
 
-        var processGroups: [String: [TopProcess]] = [:]
-        for process in processes {
-            let responsiblePid = ProcessReader.getResponsiblePid(process.pid)
-            let groupKey = "\(responsiblePid)"
-            if processGroups[groupKey] != nil {
-                processGroups[groupKey]!.append(process)
-            } else {
-                processGroups[groupKey] = [process]
-            }
+    // Groups processes by responsible app, sums their usage, and returns the largest groups.
+    private func combine(_ processes: [TopProcess]) -> [TopProcess]
+    {
+        var processGroups: [Int: [TopProcess]] = [:]
+        for process in processes
+        {
+            processGroups[ProcessReader.getResponsiblePid(process.pid), default: []].append(process)
         }
 
         var result: [TopProcess] = []
-        for (_, procs) in processGroups {
-            let totalUsage = procs.reduce(0) { $0 + $1.usage }
-            let firstProcess = procs.first!
-            let name: String
-            if let app = NSRunningApplication(processIdentifier: pid_t(ProcessReader.getResponsiblePid(firstProcess.pid))),
-               let appName = app.localizedName {
-                name = appName
-            } else {
-                name = firstProcess.name
-            }
-            result.append(TopProcess(
-                pid: ProcessReader.getResponsiblePid(firstProcess.pid),
-                name: name,
-                usage: totalUsage
-            ))
+        for (responsiblePid, group) in processGroups
+        {
+            let totalUsage = group.reduce(0) { $0 + $1.usage }
+            let appName = NSRunningApplication(processIdentifier: pid_t(responsiblePid))?.localizedName
+            result.append(TopProcess(pid: responsiblePid, name: appName ?? group[0].name, usage: totalUsage))
         }
 
         result.sort { $0.usage > $1.usage }
-        self.callback(Array(result.prefix(self.numberOfProcesses)))
+        return Array(result.prefix(self.numberOfProcesses))
     }
 
     private static let dynGetResponsiblePidFunc: UnsafeMutableRawPointer? = {

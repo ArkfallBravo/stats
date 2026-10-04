@@ -14,7 +14,6 @@ internal class PressureHistoryView: NSView {
     private struct Point {
         let value: Double  // 0.0 – 1.0
         let level: Int     // 1 = normal, 2 = warning, 4 = critical
-        let ts: Date
     }
 
     private let queue = DispatchQueue(label: "PressureHistoryView", attributes: .concurrent)
@@ -36,7 +35,7 @@ internal class PressureHistoryView: NSView {
             guard let self else { return }
             let n = self.points.count
             guard n > 0 else { return }
-            self.points[self.head] = Point(value: value, level: level, ts: Date())
+            self.points[self.head] = Point(value: value, level: level)
             self.head = (self.head + 1) % n
         }
         DispatchQueue.main.async { [weak self] in
