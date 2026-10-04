@@ -28,6 +28,7 @@ public enum widget_t: String {
     case state = "state"
     case text = "text"
     case memoryPressure = "memory_pressure"
+    case compressionRatio = "compression_ratio"
 
     public func new(module: String, config: NSDictionary, defaultWidget: widget_t) -> SWidget? {
         guard let widgetConfig: NSDictionary = config[self.rawValue] as? NSDictionary else { return nil }
@@ -82,6 +83,9 @@ public enum widget_t: String {
         case .memoryPressure:
             preview = MemoryPressureWidget(title: module, config: widgetConfig, preview: true)
             item = MemoryPressureWidget(title: module, config: widgetConfig, preview: false)
+        case .compressionRatio:
+            preview = CompressionRatioWidget(title: module, config: widgetConfig, preview: true)
+            item = CompressionRatioWidget(title: module, config: widgetConfig, preview: false)
         default: break
         }
         
@@ -147,6 +151,7 @@ public enum widget_t: String {
         case .state: return localizedString("State widget")
         case .text: return localizedString("Text widget")
         case .memoryPressure: return localizedString("Memory pressure widget")
+        case .compressionRatio: return localizedString("Compression ratio widget")
         default: return ""
         }
     }

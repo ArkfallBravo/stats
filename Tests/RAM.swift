@@ -78,4 +78,14 @@ class RAM: XCTestCase {
         XCTAssertEqual(process.name, "Safari")
         XCTAssertEqual(process.usage, 658 * Double(1000 * 1000))
     }
+
+    func testUsageReader_compressionPercent() throws
+    {
+        XCTAssertEqual(UsageReader.compressionPercent(compressedPages: 0, availablePages: 0), 0)
+        XCTAssertEqual(UsageReader.compressionPercent(compressedPages: 0, availablePages: 1000), 0)
+        XCTAssertEqual(UsageReader.compressionPercent(compressedPages: 1000, availablePages: 1000), 50)
+        XCTAssertEqual(UsageReader.compressionPercent(compressedPages: 1000, availablePages: 0), 100)
+        XCTAssertEqual(UsageReader.compressionPercent(compressedPages: 2, availablePages: 1), 66)
+        XCTAssertEqual(UsageReader.compressionPercent(compressedPages: 4_000_000, availablePages: 1_000_000), 80)
+    }
 }

@@ -39,6 +39,7 @@ You can use a combination of any of the variables.
 <li><b>$swap.free</b>: <small>Free swap memory.</small></li>
 <li><b>$pressure.value</b>: <small>Pressure value (normal, warning, critical).</small></li>
 <li><b>$pressure.level</b>: <small>Pressure level (1, 2, 4).</small></li>
+<li><b>$pressure.compression</b>: <small>Compressed memory as a share of all pageable memory. The kernel enters warning above 50% and critical above ~66% (Macs over 3 GB).</small></li>
 </ul>
 """
 

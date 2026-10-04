@@ -28,6 +28,7 @@ public struct RAM_Usage: Codable, RemoteType {
     var swap: Swap
     var pressure: Pressure
     var pressurePercent: Int = 0
+    var compressionPercent: Int = 0
 
     var swapins: Int64
     var swapouts: Int64
@@ -231,6 +232,7 @@ public class RAM: Module {
                         switch pair.value {
                         case "level": replacement = "\(value.pressure.level)"
                         case "value": replacement = value.pressure.value.rawValue
+                        case "compression": replacement = "\(value.compressionPercent)%"
                         default: return
                         }
                     default: return
@@ -244,6 +246,9 @@ public class RAM: Module {
                 widget.setValue(text)
             case let widget as DotWidget: widget.setValue(value.pressure.value.pressureColor())
             case let widget as MemoryPressureWidget: widget.setValue(value.pressurePercent)
+            case let widget as CompressionRatioWidget:
+                widget.setValue(value.compressionPercent)
+                widget.setPressure(value.pressure.value)
             default: break
             }
         }

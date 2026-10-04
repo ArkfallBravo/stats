@@ -221,6 +221,8 @@
 		9AF9EE1124648ADC005D2270 /* readers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AF9EE1024648ADC005D2270 /* readers.swift */; };
 		AA00000000000000000000A1 /* libIOReport.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C1E45552D11D66200525864 /* libIOReport.tbd */; };
 		AA0000012F000001000BEEF0 /* MemoryPressure.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000022F000001000BEEF0 /* MemoryPressure.swift */; };
+		AA0000032F000001000BEEF0 /* LabeledPercent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000042F000001000BEEF0 /* LabeledPercent.swift */; };
+		AA0000052F000001000BEEF0 /* CompressionRatio.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000062F000001000BEEF0 /* CompressionRatio.swift */; };
 		BB0000012F000001000BEEF0 /* PressureHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000022F000001000BEEF0 /* PressureHistoryView.swift */; };
 /* End PBXBuildFile section */
 
@@ -773,6 +775,8 @@
 		9AF9EE12246492E8005D2270 /* config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = config.plist; sourceTree = "<group>"; };
 		9AF9EE192464A7B3005D2270 /* config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = config.plist; sourceTree = "<group>"; };
 		AA0000022F000001000BEEF0 /* MemoryPressure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryPressure.swift; sourceTree = "<group>"; };
+		AA0000042F000001000BEEF0 /* LabeledPercent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabeledPercent.swift; sourceTree = "<group>"; };
+		AA0000062F000001000BEEF0 /* CompressionRatio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompressionRatio.swift; sourceTree = "<group>"; };
 		BB0000022F000001000BEEF0 /* PressureHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PressureHistoryView.swift; sourceTree = "<group>"; };
 		B8F0D4F1259D19B100AAFAAF /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		BB9E59E725BB5F5E004AED95 /* hu */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hu; path = hu.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -1127,6 +1131,8 @@
 				9AEBBE4C28D773430082A6A1 /* Dot.swift */,
 				5CAA50712C8E417700B13E13 /* Text.swift */,
 				AA0000022F000001000BEEF0 /* MemoryPressure.swift */,
+				AA0000042F000001000BEEF0 /* LabeledPercent.swift */,
+				AA0000062F000001000BEEF0 /* CompressionRatio.swift */,
 			);
 			path = Widgets;
 			sourceTree = "<group>";
@@ -2292,6 +2298,8 @@
 				9A2847682666AA2700EC1F6D /* Stack.swift in Sources */,
 				9AEBBE4D28D773430082A6A1 /* Dot.swift in Sources */,
 				AA0000012F000001000BEEF0 /* MemoryPressure.swift in Sources */,
+				AA0000032F000001000BEEF0 /* LabeledPercent.swift in Sources */,
+				AA0000052F000001000BEEF0 /* CompressionRatio.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

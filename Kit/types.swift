@@ -451,6 +451,22 @@ public enum RAMPressure: String, Codable {
             return NSColor.systemRed
         }
     }
+
+    // Returns the pressure color above normal, or nil at normal.
+    public func alertColor() -> NSColor?
+    {
+        if self == .normal
+        {
+            return nil
+        }
+        return self.pressureColor()
+    }
+
+    // Returns the default text color at normal, and the pressure color once above it.
+    public func textColor() -> NSColor
+    {
+        return self.alertColor() ?? NSColor.textColor
+    }
     
     public func number() -> Int {
         switch self {

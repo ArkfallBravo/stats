@@ -17,7 +17,7 @@ internal class Popup: PopupWrapper {
     
     private let dashboardHeight: CGFloat = 90
     private let chartHeight: CGFloat = 90 + Constants.Popup.separatorHeight
-    private let detailsHeight: CGFloat = (22*6) + Constants.Popup.separatorHeight + 16
+    private let detailsHeight: CGFloat = (22*8) + Constants.Popup.separatorHeight + 16
     private let processHeight: CGFloat = 22
     
     private var usedField: NSTextField? = nil
@@ -27,6 +27,8 @@ internal class Popup: PopupWrapper {
     private var inactiveField: NSTextField? = nil
     private var wiredField: NSTextField? = nil
     private var compressedField: NSTextField? = nil
+    private var pressurePercentField: NSTextField? = nil
+    private var compressionField: NSTextField? = nil
     private var swapField: NSTextField? = nil
     
     private var appColorView: NSView? = nil
@@ -229,6 +231,8 @@ internal class Popup: PopupWrapper {
         (self.compressedColorView, _, self.compressedField) = popupWithColorRow(container, color: self.compressedColor, title: "\(localizedString("Compressed")):", value: "")
         (self.freeColorView, _, self.freeField) = popupWithColorRow(container, color: self.freeColor.withAlphaComponent(0.5), title: "\(localizedString("Free")):", value: "")
         self.swapField = popupRow(container, title: "\(localizedString("Swap")):", value: "").1
+        self.pressurePercentField = popupRow(container, title: "\(localizedString("RAM pressure")):", value: "").1
+        self.compressionField = popupRow(container, title: "\(localizedString("Compression ratio")):", value: "").1
         
         view.addSubview(separator)
         view.addSubview(container)
@@ -268,6 +272,9 @@ internal class Popup: PopupWrapper {
         self.inactiveField?.stringValue = Units(bytes: Int64(value.inactive)).getReadableMemory(style: .memory)
         self.wiredField?.stringValue = Units(bytes: Int64(value.wired)).getReadableMemory(style: .memory)
         self.compressedField?.stringValue = Units(bytes: Int64(value.compressed)).getReadableMemory(style: .memory)
+        self.pressurePercentField?.stringValue = "\(value.pressurePercent)%"
+        self.compressionField?.stringValue = "\(value.compressionPercent)%"
+        self.compressionField?.textColor = value.pressure.value.textColor()
         self.swapField?.stringValue = Units(bytes: Int64(value.swap.used)).getReadableMemory(style: .memory)
         
         self.usedField?.stringValue = Units(bytes: Int64(value.used)).getReadableMemory(style: .memory)

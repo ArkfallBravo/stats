@@ -12,7 +12,7 @@
 import Cocoa
 import Kit
 
-internal class UsageReader: Reader<RAM_Usage> {
+public class UsageReader: Reader<RAM_Usage> {
     public var totalSize: Double = 0
     
     public override func setup() {
@@ -62,10 +62,12 @@ internal class UsageReader: Reader<RAM_Usage> {
             var pressureLevel: Int = 0
             sysctlbyname("kern.memorystatus_vm_pressure_level", &pressureLevel, &intSize, nil, 0)
 
-            var memorstatusLevel: Int = 100
-            var memorstatusLevelSize: size_t = MemoryLayout<Int>.size
-            sysctlbyname("kern.memorystatus_level", &memorstatusLevel, &memorstatusLevelSize, nil, 0)
-            let pressurePercent: Int = max(0, min(100, 100 - memorstatusLevel))
+            var memoryStatusLevel: Int = 100
+            var memoryStatusLevelSize: size_t = MemoryLayout<Int>.size
+            sysctlbyname("kern.memorystatus_level", &memoryStatusLevel, &memoryStatusLevelSize, nil, 0)
+            let pressurePercent: Int = max(0, min(100, 100 - memoryStatusLevel))
+            let availablePages = UInt64(stats.free_count) + UInt64(stats.active_count) + UInt64(stats.inactive_count)
+            let compressionPercent = UsageReader.compressionPercent(compressedPages: UInt64(stats.compressor_page_count), availablePages: availablePages)
             
             var pressureValue: RAMPressure
             switch pressureLevel {
@@ -98,6 +100,7 @@ internal class UsageReader: Reader<RAM_Usage> {
                 ),
                 pressure: Pressure(level: pressureLevel, value: pressureValue),
                 pressurePercent: pressurePercent,
+                compressionPercent: compressionPercent,
 
                 swapins: swapins,
                 swapouts: swapouts
@@ -106,6 +109,17 @@ internal class UsageReader: Reader<RAM_Usage> {
         }
         
         error("host_statistics64(): \(String(cString: mach_error_string(result), encoding: String.Encoding.ascii) ?? "unknown error")", log: self.log)
+    }
+
+    // Returns C/(A+C) as a floored percent, the ratio the kernel's pressure-level thresholds test.
+    public static func compressionPercent(compressedPages: UInt64, availablePages: UInt64) -> Int
+    {
+        let pageablePages = compressedPages + availablePages
+        if pageablePages == 0
+        {
+            return 0
+        }
+        return Int(compressedPages * 100 / pageablePages)
     }
 }
 

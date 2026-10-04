@@ -65,4 +65,18 @@ class KitTests: XCTestCase {
         XCTAssertEqual(Units(bytes: 500_000).getReadableSpeed(base: .byte, unit: "MB"), "0.5 MB/s")
         XCTAssertEqual(Units(bytes: 500_000).getReadableSpeed(base: .bit, unit: "MB"), "4 Mb/s")
     }
+
+    func testRAMPressure_textColor() throws
+    {
+        XCTAssertEqual(RAMPressure.normal.textColor(), NSColor.textColor)
+        XCTAssertEqual(RAMPressure.warning.textColor(), NSColor.systemOrange)
+        XCTAssertEqual(RAMPressure.critical.textColor(), NSColor.systemRed)
+    }
+
+    func testRAMPressure_alertColor() throws
+    {
+        XCTAssertNil(RAMPressure.normal.alertColor())
+        XCTAssertEqual(RAMPressure.warning.alertColor(), NSColor.systemOrange)
+        XCTAssertEqual(RAMPressure.critical.alertColor(), NSColor.systemRed)
+    }
 }

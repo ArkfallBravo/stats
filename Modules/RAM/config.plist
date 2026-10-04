@@ -123,6 +123,18 @@
 				<integer>42</integer>
 			</dict>
 		</dict>
+		<key>compression_ratio</key>
+		<dict>
+			<key>Default</key>
+			<false/>
+			<key>Order</key>
+			<integer>10</integer>
+			<key>Preview</key>
+			<dict>
+				<key>Value</key>
+				<integer>42</integer>
+			</dict>
+		</dict>
 	</dict>
 	<key>Settings</key>
 	<dict>

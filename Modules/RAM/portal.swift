@@ -19,6 +19,7 @@ public class Portal: PortalWrapper {
     private var freeField: NSTextField? = nil
     private var swapField: NSTextField? = nil
     private var pressureLevelField: NSTextField? = nil
+    private var compressionField: NSTextField? = nil
     
     private var initialized: Bool = false
     
@@ -65,6 +66,7 @@ public class Portal: PortalWrapper {
         self.freeField = portalRow(view, title: "\(localizedString("Free")):").1
         self.swapField = portalRow(view, title: "Swap:").1
         self.pressureLevelField = portalRow(view, title: "\(localizedString("Pressure")):").1
+        self.compressionField = portalRow(view, title: "\(localizedString("Compression")):").1
         
         return view
     }
@@ -76,6 +78,7 @@ public class Portal: PortalWrapper {
                 self.freeField?.stringValue = Units(bytes: Int64(value.free)).getReadableMemory(style: .memory)
                 self.swapField?.stringValue = Units(bytes: Int64(value.swap.used)).getReadableMemory(style: .memory)
                 self.pressureLevelField?.stringValue = value.pressure.value.rawValue
+                self.compressionField?.stringValue = "\(value.compressionPercent)%"
                 
                 self.usedField?.toolTip = "\(Int(value.usage.rounded(toPlaces: 2) * 100))%"
                 self.freeField?.toolTip = "\(Int((1-value.usage).rounded(toPlaces: 2) * 100))%"

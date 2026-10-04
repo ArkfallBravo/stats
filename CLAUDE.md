@@ -16,6 +16,8 @@ CI builds Release with code signing disabled: `xcodebuild -scheme Stats -destina
 
 Each module and `Kit` also has its own scheme (`xcodebuild -list -project Stats.xcodeproj` to see all: `Stats`, `Kit`, `CPU`, `GPU`, `RAM`, `Disk`, `Net`, `Battery`, `Sensors`, `Bluetooth`, `Clock`, `Remote`, `LaunchAtLogin`, `SMC`, `Helper`, `WidgetsExtension`).
 
+**Debug builds of the `Stats` scheme install straight into `/Applications/Stats.app`** (commit `03bf7460`). So any `Stats`-scheme Debug build, including `xcodebuild test`, overwrites the app the user runs. For a compile check that leaves the installed app alone, build a module scheme instead (e.g. `-scheme RAM` also builds `Kit`). From the CLI, the default signing fails ("No signing certificate 'Mac Development' found"); append `CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM=` to build ad-hoc.
+
 ### Test
 There's no standalone `Tests` scheme — the test target (`Tests.xctest`) is wired into the `Stats` scheme's test action:
 ```bash
@@ -27,7 +29,10 @@ Run a single test with `-only-testing:Tests/<ClassName>/<testMethodName>`. Tests
 ```bash
 swiftlint
 ```
-Rules are in `.swiftlint.yml` at the repo root; CI runs this on every push/PR touching `*.swift` (`.github/workflows/linter.yaml`). Several rules are deliberately disabled (`force_cast`, `type_name`, `cyclomatic_complexity`, etc.) — don't re-enable them incidentally by "fixing" unrelated code.
+swiftlint isn't installed on the dev machine as of 2026-10, so lint only runs in CI. Rules are in `.swiftlint.yml` at the repo root (`opening_brace` is disabled, so Allman braces pass); CI runs this on every push/PR touching `*.swift` (`.github/workflows/linter.yaml`). Several rules are deliberately disabled (`force_cast`, `type_name`, `cyclomatic_complexity`, etc.) — don't re-enable them incidentally by "fixing" unrelated code.
+
+### Living docs
+`docs/plan.md` holds in-flight work; `docs/todo.md` holds outstanding items. The xnu kernel source is checked out next to this repo at `../xnu`. Use it for memory pressure and VM questions; `docs/plan.md` cites the relevant spots.
 
 ### i18n check
 `.strings` files are validated by `python3 Kit/scripts/i18n.py` (CI: `.github/workflows/i18n.yaml`) — checks translation key consistency across locales.
