@@ -16,7 +16,7 @@ CI builds Release with code signing disabled: `xcodebuild -scheme Stats -destina
 
 Each module and `Kit` also has its own scheme (`xcodebuild -list -project Stats.xcodeproj` to see all: `Stats`, `Kit`, `CPU`, `GPU`, `RAM`, `Disk`, `Net`, `Battery`, `Sensors`, `Bluetooth`, `Clock`, `Remote`, `LaunchAtLogin`, `SMC`, `Helper`, `WidgetsExtension`).
 
-**Debug builds of the `Stats` scheme install straight into `/Applications/Stats.app`** (commit `03bf7460`). So any `Stats`-scheme Debug build, including `xcodebuild test`, overwrites the app the user runs. For a compile check that leaves the installed app alone, build a module scheme instead (e.g. `-scheme RAM` also builds `Kit`). From the CLI, the default signing fails ("No signing certificate 'Mac Development' found"); append `CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM=` to build ad-hoc.
+**Debug builds of the `Stats` scheme install straight into `/Applications/Stats.app`** (commit `03bf7460`). So any `Stats`-scheme Debug build, including `xcodebuild test`, overwrites the app the user runs. For a compile check that leaves the installed app alone, build a module scheme instead (e.g. `-scheme RAM` also builds `Kit`). When a feature is finished, do a `Stats`-scheme Debug build so the user can test the installed app right away (user preference, 2026-10-09). From the CLI, the default signing fails ("No signing certificate 'Mac Development' found"); append `CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM=` to build ad-hoc.
 
 ### Test
 There's no standalone `Tests` scheme — the test target (`Tests.xctest`) is wired into the `Stats` scheme's test action:
@@ -83,6 +83,7 @@ A module target follows a fixed file layout:
 - `Store` — wraps `UserDefaults` with an in-memory cache for settings/state persistence, keyed per-module (e.g. `"<ModuleName>_state"`)
 - `DB` — LevelDB-backed (`Kit/lldb`) time-series storage for reader history
 - `SystemKit` — hardware/platform identification (Intel vs. Apple Silicon variants)
+- `OKHSL` (fork-owned): an `NSColor` ↔ OKHSL conversion struct, ported from Ottosson's ok_color.h. `HistoryRing` (fork-owned): a thread-safe, fixed-capacity history buffer for chart samples.
 - `SystemStats`, `Updater`, `Reachability`, `Repeater`, `Charts`, `Logger` — telemetry-free stats reporting, update checking (against `api.mac-stats.com`, falling back to GitHub releases), network reachability, interval repeating, chart rendering primitives, and logging
 
 `Kit/Widgets/` holds shared SwiftUI/AppKit chart & widget-rendering components (line/bar/pie charts, tachometer, etc.) used across modules' `widget.swift` files.

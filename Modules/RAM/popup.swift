@@ -38,7 +38,8 @@ internal class Popup: PopupWrapper {
     private var sliderView: NSView? = nil
     
     private var chart: LineChartView? = nil
-    private var pressureChart: PressureHistoryView? = nil
+    private var levelChart: PressureHistoryView? = nil
+    private var combinedChart: CombinedHistoryView? = nil
     private var bar: BarChartView = BarChartView(size: 10, horizontal: true)
     private var circle: PieChartView? = nil
     private var level: GaugeChartView? = nil
@@ -60,6 +61,7 @@ internal class Popup: PopupWrapper {
     private var lineChartFixedScale: Double = 1
     private var chartMetric: String = "usage"
     private var chartPrefSection: PreferencesSection? = nil
+    private var scaleValueRow: PreferencesRow? = nil
     private var chartSeparator: NSView? = nil
     
     private var appColorState: SColor = .secondBlue
@@ -188,8 +190,35 @@ internal class Popup: PopupWrapper {
         return view
     }
     
-    private func chartSeparatorTitle() -> String {
-        self.chartMetric == "pressure" ? localizedString("Pressure history") : localizedString("Usage history")
+    // Returns whether the chart metric is drawn on the pressure-level-colored chart.
+    private var usesLevelChart: Bool
+    {
+        self.chartMetric == "pressure" || self.chartMetric == "compression"
+    }
+
+    // Returns whether the chart metric is drawn on the combined line chart.
+    private var usesCombinedChart: Bool
+    {
+        self.chartMetric == "combined"
+    }
+
+    // Shows only the chart view that draws the selected metric.
+    private func showSelectedChart()
+    {
+        self.chart?.isHidden = self.usesLevelChart || self.usesCombinedChart
+        self.levelChart?.isHidden = !self.usesLevelChart
+        self.combinedChart?.isHidden = !self.usesCombinedChart
+    }
+
+    private func chartSeparatorTitle() -> String
+    {
+        switch self.chartMetric
+        {
+        case "pressure": return localizedString("Pressure history")
+        case "compression": return localizedString("Compression history")
+        case "combined": return localizedString("Memory history")
+        default: return localizedString("Usage history")
+        }
     }
 
     private func initChart() -> NSView  {
@@ -204,12 +233,14 @@ internal class Popup: PopupWrapper {
         let chartFrame = NSRect(x: 1, y: 0, width: view.frame.width - 2, height: container.frame.height)
         self.chart = LineChartView(frame: chartFrame, num: self.lineChartHistory, scale: self.lineChartScale, fixedScale: self.lineChartFixedScale)
         self.chart?.setColor(self.chartColor)
-        self.chart?.isHidden = (self.chartMetric == "pressure")
         container.addSubview(self.chart!)
 
-        self.pressureChart = PressureHistoryView(frame: chartFrame, num: self.lineChartHistory)
-        self.pressureChart?.isHidden = (self.chartMetric != "pressure")
-        container.addSubview(self.pressureChart!)
+        self.levelChart = PressureHistoryView(frame: chartFrame, num: self.lineChartHistory)
+        container.addSubview(self.levelChart!)
+
+        self.combinedChart = CombinedHistoryView(frame: chartFrame, num: self.lineChartHistory)
+        container.addSubview(self.combinedChart!)
+        self.showSelectedChart()
         
         view.addSubview(separator)
         view.addSubview(container)
@@ -258,11 +289,23 @@ internal class Popup: PopupWrapper {
         return view
     }
     
-    public func loadCallback(_ value: RAM_Usage) {
+    public func loadCallback(_ value: RAM_Usage)
+    {
         self.apply(value, to: self.loadCache, render: self.renderLoad)
-        if self.chartMetric == "pressure" {
-            self.pressureChart?.addValue(value: Double(value.pressurePercent) / 100.0, level: value.pressure.level)
-        } else {
+        switch self.chartMetric
+        {
+        case "pressure":
+            self.levelChart?.addValue(value: Double(value.pressurePercent) / 100.0, level: value.pressure.level)
+        case "compression":
+            self.levelChart?.addValue(value: Double(value.compressionPercent) / 100.0, level: value.pressure.level)
+        case "combined":
+            self.combinedChart?.addSample(CombinedSample(
+                usage: value.usage,
+                pressure: Double(value.pressurePercent) / 100.0,
+                compression: Double(value.compressionPercent) / 100.0,
+                level: value.pressure.level
+            ))
+        default:
             self.chart?.addValue(value.usage)
         }
     }
@@ -359,12 +402,16 @@ internal class Popup: PopupWrapper {
             value: Int(self.lineChartFixedScale * 100),
             initialValue: "\(Int(self.lineChartFixedScale * 100)) %"
         )
+        let scaleValueRow = PreferencesRow(localizedString("Scale value"), component: self.sliderView!)
+        self.scaleValueRow = scaleValueRow
         self.chartPrefSection = PreferencesSection([
             PreferencesRow(localizedString("Chart data"), component: selectView(
                 action: #selector(self.toggleChartMetric),
                 items: [
                     KeyValue_t(key: "usage",    value: "Usage"),
-                    KeyValue_t(key: "pressure", value: "Memory pressure")
+                    KeyValue_t(key: "pressure", value: "Memory pressure"),
+                    KeyValue_t(key: "compression", value: "Compression ratio"),
+                    KeyValue_t(key: "combined", value: "Combined")
                 ],
                 selected: self.chartMetric
             )),
@@ -383,9 +430,9 @@ internal class Popup: PopupWrapper {
                 items: Scale.allCases,
                 selected: self.lineChartScale.key
             )),
-            PreferencesRow(localizedString("Scale value"), component: self.sliderView!)
+            scaleValueRow
         ])
-        self.chartPrefSection?.setRowVisibility(3, newState: self.lineChartScale == .fixed)
+        self.chartPrefSection?.setRowVisibility(scaleValueRow, newState: self.lineChartScale == .fixed)
         view.addArrangedSubview(self.chartPrefSection!)
         
         return view
@@ -423,24 +470,42 @@ internal class Popup: PopupWrapper {
             self.freeColorView?.layer?.backgroundColor = color.cgColor
         }
     }
-    @objc private func toggleChartMetric(_ sender: NSMenuItem) {
-        guard let key = sender.representedObject as? String else { return }
+    @objc private func toggleChartMetric(_ sender: NSMenuItem)
+    {
+        guard let key = sender.representedObject as? String else
+        {
+            return
+        }
         self.chartMetric = key
         Store.shared.set(key: "\(self.title)_chartMetric", value: key)
-        let isPressure = (key == "pressure")
-        // Show/hide the correct chart view
-        self.chart?.isHidden = isPressure
-        self.pressureChart?.isHidden = !isPressure
-        // Clear the newly-visible chart so old data doesn't bleed in
-        if isPressure {
-            self.pressureChart?.reinit(self.lineChartHistory)
-        } else {
+        self.showSelectedChart()
+        // Clear the chart now receiving data so the previous metric's history doesn't bleed in
+        if self.usesLevelChart
+        {
+            self.levelChart?.reinit(self.lineChartHistory)
+        }
+        else if self.usesCombinedChart
+        {
+            self.combinedChart?.reinit(self.lineChartHistory)
+        }
+        else
+        {
             self.chart?.setPoints([])
             self.chart?.reinit(self.lineChartHistory)
         }
-        if let label = self.chartSeparator?.subviews.first as? NSTextField {
-            label.stringValue = self.chartSeparatorTitle()
+        self.replaceChartSeparator()
+    }
+
+    // Swaps in a separator titled for the selected chart metric.
+    private func replaceChartSeparator()
+    {
+        guard let old = self.chartSeparator else
+        {
+            return
         }
+        let separator = separatorView(self.chartSeparatorTitle(), origin: old.frame.origin, width: old.frame.width)
+        old.superview?.replaceSubview(old, with: separator)
+        self.chartSeparator = separator
     }
 
     @objc private func toggleChartColor(_ sender: NSMenuItem) {
@@ -456,12 +521,16 @@ internal class Popup: PopupWrapper {
         self.lineChartHistory = value
         Store.shared.set(key: "\(self.title)_lineChartHistory", value: value)
         self.chart?.reinit(self.lineChartHistory)
-        self.pressureChart?.reinit(self.lineChartHistory)
+        self.levelChart?.reinit(self.lineChartHistory)
+        self.combinedChart?.reinit(self.lineChartHistory)
     }
     @objc private func toggleLineChartScale(_ sender: NSMenuItem) {
         guard let key = sender.representedObject as? String,
               let value = Scale.allCases.first(where: { $0.key == key }) else { return }
-        self.chartPrefSection?.setRowVisibility(3, newState: value == .fixed)
+        if let scaleValueRow = self.scaleValueRow
+        {
+            self.chartPrefSection?.setRowVisibility(scaleValueRow, newState: value == .fixed)
+        }
         self.lineChartScale = value
         self.chart?.setScale(self.lineChartScale, fixedScale: self.lineChartFixedScale)
         Store.shared.set(key: "\(self.title)_lineChartScale", value: key)

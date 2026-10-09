@@ -79,4 +79,85 @@ class KitTests: XCTestCase {
         XCTAssertEqual(RAMPressure.warning.alertColor(), NSColor.systemOrange)
         XCTAssertEqual(RAMPressure.critical.alertColor(), NSColor.systemRed)
     }
+
+    // Returns the sRGB components of a color.
+    private func components(_ color: NSColor) -> [CGFloat]
+    {
+        let srgb = color.usingColorSpace(.sRGB)!
+        return [srgb.redComponent, srgb.greenComponent, srgb.blueComponent]
+    }
+
+    func testOKHSL_roundTrip() throws
+    {
+        let colors: [NSColor] = [
+            NSColor(srgbRed: 1, green: 0, blue: 0, alpha: 1),
+            NSColor(srgbRed: 0, green: 1, blue: 0, alpha: 1),
+            NSColor(srgbRed: 0, green: 0, blue: 1, alpha: 1),
+            NSColor(srgbRed: 1, green: 1, blue: 0, alpha: 1),
+            NSColor(srgbRed: 0.2, green: 0.6, blue: 0.4, alpha: 1),
+            NSColor(srgbRed: 0.9, green: 0.3, blue: 0.7, alpha: 1),
+            NSColor(srgbRed: 0.1, green: 0.15, blue: 0.2, alpha: 1)
+        ]
+        for color in colors
+        {
+            let roundTripped = self.components(OKHSL(color).color)
+            for (index, expected) in self.components(color).enumerated()
+            {
+                XCTAssertEqual(roundTripped[index], expected, accuracy: 1e-6, "\(color)")
+            }
+        }
+    }
+
+    func testOKHSL_achromatic() throws
+    {
+        let gray = OKHSL(NSColor(srgbRed: 0.5, green: 0.5, blue: 0.5, alpha: 1))
+        XCTAssertEqual(gray.saturation, 0, accuracy: 1e-4)
+
+        let black = OKHSL(NSColor(srgbRed: 0, green: 0, blue: 0, alpha: 1))
+        XCTAssertEqual(black.lightness, 0, accuracy: 1e-9)
+        XCTAssertEqual(black.saturation, 0)
+
+        let white = OKHSL(NSColor(srgbRed: 1, green: 1, blue: 1, alpha: 1))
+        XCTAssertEqual(white.lightness, 1, accuracy: 1e-6)
+        XCTAssertTrue(white.saturation.isFinite)
+    }
+
+    func testOKHSL_fullSaturationReachesGamutEdge() throws
+    {
+        for step in 0..<12
+        {
+            let color = OKHSL(hue: Double(step) / 12, saturation: 1, lightness: 0.6).color
+            let channels = self.components(color)
+            let onEdge = channels.contains { $0 <= 1e-3 || $0 >= 1 - 1e-3 }
+            XCTAssertTrue(onEdge, "hue step \(step): \(channels)")
+        }
+    }
+
+    func testOKHSL_keepsHueAcrossLightness() throws
+    {
+        let hue = OKHSL(NSColor(srgbRed: 0.2, green: 0.6, blue: 0.4, alpha: 1)).hue
+        let lighter = OKHSL(OKHSL(hue: hue, saturation: 0.8, lightness: 0.8).color)
+        XCTAssertEqual(lighter.hue, hue, accuracy: 1e-6)
+        XCTAssertEqual(lighter.saturation, 0.8, accuracy: 1e-6)
+        XCTAssertEqual(lighter.lightness, 0.8, accuracy: 1e-6)
+    }
+
+    func testHistoryRing_ordersOldestFirst() throws
+    {
+        let ring = HistoryRing<Int>(capacity: 3)
+        ring.append(1)
+        XCTAssertEqual(ring.ordered(), [nil, nil, 1])
+
+        ring.append(2)
+        ring.append(3)
+        ring.append(4)
+        XCTAssertEqual(ring.ordered(), [2, 3, 4])
+
+        ring.reset(capacity: 2)
+        XCTAssertEqual(ring.ordered(), [nil, nil])
+        ring.append(5)
+        ring.append(6)
+        ring.append(7)
+        XCTAssertEqual(ring.ordered(), [6, 7])
+    }
 }

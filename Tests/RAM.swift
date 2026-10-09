@@ -102,4 +102,34 @@ class RAM: XCTestCase {
         XCTAssertEqual(UsageReader.compressionPercent(compressedPages: 2, availablePages: 1), 66)
         XCTAssertEqual(UsageReader.compressionPercent(compressedPages: 4_000_000, availablePages: 1_000_000), 80)
     }
+
+    func testHistoryRuns_polylines() throws
+    {
+        let points: [CGPoint?] = [
+            CGPoint(x: 0, y: 0), CGPoint(x: 1, y: 1), nil,
+            CGPoint(x: 3, y: 3), nil,
+            CGPoint(x: 5, y: 5), CGPoint(x: 6, y: 6), CGPoint(x: 7, y: 7)
+        ]
+        XCTAssertEqual(HistoryRuns.polylines(points), [
+            [CGPoint(x: 0, y: 0), CGPoint(x: 1, y: 1)],
+            [CGPoint(x: 5, y: 5), CGPoint(x: 6, y: 6), CGPoint(x: 7, y: 7)]
+        ])
+        XCTAssertEqual(HistoryRuns.polylines([]), [])
+    }
+
+    func testHistoryRuns_levelPolylines() throws
+    {
+        let levels: [Int?] = [1, 1, 2, 2, nil, 4, 4, nil, 1, nil, 1, 1]
+        let points: [LevelPoint?] = levels.enumerated().map
+        { index, level in
+            level.map { LevelPoint(point: CGPoint(x: index, y: 0), level: $0) }
+        }
+        XCTAssertEqual(HistoryRuns.levelPolylines(points), [
+            LevelRun(level: 1, points: [CGPoint(x: 0, y: 0), CGPoint(x: 1, y: 0), CGPoint(x: 2, y: 0)]),
+            LevelRun(level: 2, points: [CGPoint(x: 2, y: 0), CGPoint(x: 3, y: 0)]),
+            LevelRun(level: 4, points: [CGPoint(x: 5, y: 0), CGPoint(x: 6, y: 0)]),
+            LevelRun(level: 1, points: [CGPoint(x: 10, y: 0), CGPoint(x: 11, y: 0)])
+        ])
+        XCTAssertEqual(HistoryRuns.levelPolylines([]), [])
+    }
 }

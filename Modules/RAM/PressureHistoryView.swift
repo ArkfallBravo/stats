@@ -1,138 +1,124 @@
+// ----------------------------------------------------------------------- //
 //
-//  PressureHistoryView.swift
-//  Memory
+// MODULE  : PressureHistoryView.swift
 //
-//  Created by Helena Simson.
+// PURPOSE : Line chart of a percent history colored by memory pressure level
 //
+// CREATED : 5/28/2026
+//
+// ----------------------------------------------------------------------- //
 
 import Cocoa
+import Kit
 
-/// A line-chart view for memory pressure history.
-/// Each time-slice is coloured green (normal), yellow (warning), or red (critical)
+/// A line-chart view for a 0–1 history whose time-slices are colored by memory pressure level.
+/// Each time-slice is filled green (normal), yellow (warning), or red (critical),
 /// matching Activity Monitor's memory pressure graph.
-internal class PressureHistoryView: NSView {
-    private struct Point {
+internal class PressureHistoryView: NSView
+{
+    private struct Point
+    {
         let value: Double  // 0.0 – 1.0
         let level: Int     // 1 = normal, 2 = warning, 4 = critical
     }
 
-    private let queue = DispatchQueue(label: "PressureHistoryView", attributes: .concurrent)
-    private var points: [Point?]
-    private var head: Int = 0
+    private let history: HistoryRing<Point>
 
-    init(frame: NSRect, num: Int) {
-        self.points = Array(repeating: nil, count: num)
+    init(frame: NSRect, num: Int)
+    {
+        self.history = HistoryRing(capacity: num)
         super.init(frame: frame)
         self.wantsLayer = true
     }
 
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    required init?(coder: NSCoder)
+    {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     // MARK: - Public API
 
-    func addValue(value: Double, level: Int) {
-        queue.async(flags: .barrier) { [weak self] in
-            guard let self else { return }
-            let n = self.points.count
-            guard n > 0 else { return }
-            self.points[self.head] = Point(value: value, level: level)
-            self.head = (self.head + 1) % n
-        }
-        DispatchQueue.main.async { [weak self] in
-            guard let self, self.window?.isVisible ?? false else { return }
-            self.display()
-        }
+    func addValue(value: Double, level: Int)
+    {
+        self.history.append(Point(value: value, level: level))
+        self.redrawIfVisible()
     }
 
     /// Resize the ring buffer to `num` slots (clears existing data).
-    func reinit(_ num: Int) {
-        queue.async(flags: .barrier) { [weak self] in
-            guard let self else { return }
-            self.points = Array(repeating: nil, count: num)
-            self.head = 0
-        }
-        DispatchQueue.main.async { [weak self] in
-            guard let self, self.window?.isVisible ?? false else { return }
-            self.display()
-        }
+    func reinit(_ num: Int)
+    {
+        self.history.reset(capacity: num)
+        self.redrawIfVisible()
     }
 
     // MARK: - Drawing
 
-    override func draw(_ dirtyRect: NSRect) {
+    override func draw(_ dirtyRect: NSRect)
+    {
         super.draw(dirtyRect)
-        guard let context = NSGraphicsContext.current?.cgContext else { return }
-
-        var ordered: [Point?] = []
-        queue.sync { [weak self] in
-            guard let self else { return }
-            let n = self.points.count
-            for i in 0..<n {
-                ordered.append(self.points[(self.head + i) % n])
-            }
+        guard let context = NSGraphicsContext.current?.cgContext else
+        {
+            return
         }
 
-        let n = ordered.count
-        guard n > 1 else { return }
-
-        let pixelScale: CGFloat = NSScreen.main?.backingScaleFactor ?? 1
-        let offset: CGFloat = 1 / pixelScale
-        let height: CGFloat = frame.height - offset
-        let xRatio: CGFloat = frame.width / CGFloat(n - 1)
+        let ordered = self.history.ordered()
+        guard ordered.count > 1 else
+        {
+            return
+        }
+        let geometry = HistoryGeometry(frame: self.frame, count: ordered.count)
+        let palette = HistoryPalette()
 
         // --- filled colored trapezoids between consecutive non-nil points ---
-        for i in 0..<(n - 1) {
-            guard let pt = ordered[i], let next = ordered[i + 1] else { continue }
+        for i in 0..<(ordered.count - 1)
+        {
+            guard let pt = ordered[i], let next = ordered[i + 1] else
+            {
+                continue
+            }
+            let start = geometry.point(index: i, value: pt.value)
+            let end = geometry.point(index: i + 1, value: next.value)
 
-            let x0 = CGFloat(i) * xRatio
-            let x1 = CGFloat(i + 1) * xRatio
-            let y0 = CGFloat(pt.value) * height + offset
-            let y1 = CGFloat(next.value) * height + offset
-
-            let fillColor = pressureColor(for: pt.level, alpha: 0.7)
-            context.setFillColor(fillColor.cgColor)
-
+            context.setFillColor(palette.levelColor(pt.level).withAlphaComponent(0.7).cgColor)
             context.beginPath()
-            context.move(to: CGPoint(x: x0, y: offset))
-            context.addLine(to: CGPoint(x: x0, y: y0))
-            context.addLine(to: CGPoint(x: x1, y: y1))
-            context.addLine(to: CGPoint(x: x1, y: offset))
+            context.move(to: CGPoint(x: start.x, y: geometry.offset))
+            context.addLine(to: start)
+            context.addLine(to: end)
+            context.addLine(to: CGPoint(x: end.x, y: geometry.offset))
             context.closePath()
             context.fillPath()
         }
 
         // --- line on top ---
-        var segments: [[CGPoint]] = []
-        var current: [CGPoint] = []
-        for (i, pt) in ordered.enumerated() {
-            guard let pt else {
-                if !current.isEmpty { segments.append(current); current = [] }
-                continue
-            }
-            let x = CGFloat(i) * xRatio
-            let y = CGFloat(pt.value) * height + offset
-            current.append(CGPoint(x: x, y: y))
+        let points = ordered.enumerated().map
+        { index, pt in
+            pt.map { geometry.point(index: index, value: $0.value) }
         }
-        if !current.isEmpty { segments.append(current) }
-
-        for seg in segments {
-            guard seg.count >= 2 else { continue }
+        NSColor.white.withAlphaComponent(0.8).set()
+        for polyline in HistoryRuns.polylines(points)
+        {
             let path = NSBezierPath()
-            path.move(to: seg[0])
-            for pt in seg.dropFirst() { path.line(to: pt) }
-            NSColor.white.withAlphaComponent(0.8).set()
-            path.lineWidth = offset
+            path.move(to: polyline[0])
+            for point in polyline.dropFirst()
+            {
+                path.line(to: point)
+            }
+            path.lineWidth = geometry.offset
             path.stroke()
         }
     }
 
     // MARK: - Helpers
 
-    private func pressureColor(for level: Int, alpha: CGFloat) -> NSColor {
-        switch level {
-        case 2: return NSColor.systemYellow.withAlphaComponent(alpha)
-        case 4: return NSColor.systemRed.withAlphaComponent(alpha)
-        default: return NSColor.systemGreen.withAlphaComponent(alpha)
+    private func redrawIfVisible()
+    {
+        DispatchQueue.main.async
+        { [weak self] in
+            guard let self, self.window?.isVisible ?? false else
+            {
+                return
+            }
+            self.display()
         }
     }
 }

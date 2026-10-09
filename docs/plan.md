@@ -1,18 +1,44 @@
 # plan.md
 
+## In flight: compression history chart in the RAM popup
+
+**Status (2026-10-09):** the user tested it in the installed app and confirmed it works. Committed on `my-changes` together with the combined chart below; not pushed. The RAM scheme compiles. Five new files were added to `project.pbxproj` with IDs `CC0000012F…` through `CC00000A2F…`.
+
+- **"Chart data" has a third option:** `compression` ("Compression ratio"). It plots `compressionPercent / 100`. The existing keys `usage` and `pressure` are unchanged, so saved settings still load.
+- **It reuses `PressureHistoryView`.** Each slice is colored by `value.pressure.level`, the same kernel level that tints CMPR. The "Chart color" setting doesn't apply to it, and doesn't apply to the pressure chart either. In the popup the property is now named `levelChart`, and `usesLevelChart` (pressure or compression), `usesCombinedChart` and `showSelectedChart()` drive visibility and reinit. The class name was kept so the pbxproj wouldn't need editing.
+- **Switching between pressure and compression** reinits the level chart, so the two metrics' histories never mix.
+- **Interpretation:** "compressor history" was read as the compression ratio C/(A+C), not compressed bytes. Revisit this if the user meant bytes.
+- **Also fixed in this batch:** the chart title now updates on toggle (`replaceChartSeparator()` rebuilds the separator with `separatorView`, because setting `stringValue` would drop its styling). The "Scale value" row is now hidden through a stored `scaleValueRow` reference instead of index 3, which the "Chart data" row had shifted onto "Main chart scaling".
+- **No unit test for the metric switch.** It's a three-way mapping inside a UI class, with no logic worth isolating.
+
+### Combined line chart and OKHSL palette (added 2026-10-09, same uncommitted batch)
+- **The fourth "Chart data" option is `combined` ("Combined").** Its separator title is "Memory history". `CombinedHistoryView` draws three lines and no fill:
+  - usage, solid blue
+  - pressure %, solid and colored by level
+  - compression %, dotted (`[3, 2]`) and colored by level
+  - all at `combinedLineWidth` 1.5pt
+- **Level coloring:** each segment takes its starting sample's level, mirroring the pressure chart's fill. `HistoryRuns.levelPolylines` groups segments into same-level runs, and the dash phase carries across runs by cumulative length. At 180 points, a segment is about 1.5pt, so restarting the dash on every segment would draw a solid smear.
+- **OKHSL:** `Kit/plugins/OKHSL.swift` is a reshaped port of the user's Color Picker `ColorMath.swift`, itself from Ottosson's ok_color.h. It's a struct with `init(_ NSColor)` and `.color`. One change from the reference: lightness 0 or 1 gives saturation 0 instead of a divide-by-zero NaN. The gamut cusp uses the reference polynomial fit plus one Halley step, which isn't exact. That's disclosed in the file.
+- **Palette (`HistoryPalette`):** the user chose system hues at a shared OKHSL saturation and lightness, and chose to apply it to both the combined chart and the existing pressure chart.
+  - The hues come from `systemGreen`/`systemYellow`/`systemRed`/`systemBlue`, resolved in `draw()` so the current appearance applies.
+  - Saturation 0.85 and lightness 0.65 are first guesses for the user to tune.
+  - Warning stays yellow in the charts, while the gauge, widgets and popup text keep `pressureColor()` orange. That follows the scope the user chose.
+- **Shared plumbing:** `Kit/plugins/HistoryRing.swift` is a thread-safe generic ring buffer, and `Modules/RAM/HistoryGeometry.swift` holds the point layout and the polyline splitting. `PressureHistoryView` was refactored onto both; its drawing is unchanged apart from colors.
+- **Tests: all the new ones pass** (2026-10-09, `xcodebuild test -scheme Stats`, 25 run). `testProcessReader_parsePSLine`, `testRAMPressure_alertColor` and the rest of the earlier work pass too. The only failure is `testIsNewestVersion_beta`, which is upstream's code and is tracked in `todo.md`. The tests added in this batch:
+  - in `Tests/Kit.swift`: `testOKHSL_roundTrip`, `testOKHSL_achromatic`, `testOKHSL_fullSaturationReachesGamutEdge`, `testOKHSL_keepsHueAcrossLightness`, `testHistoryRing_ordersOldestFirst`
+  - in `Tests/RAM.swift`: `testHistoryRuns_polylines`, `testHistoryRuns_levelPolylines`
+
 ## In flight: compression ratio for the RAM module
 
-**Status (2026-10-04):** implemented in the working tree on `my-changes`, uncommitted and unstaged. Waiting on the user's manual test in the running app; commit only after they confirm. The upstream merge was committed separately as `30ef4934`, so the feature diff sits cleanly on top of it.
+**Status (2026-10-04):** committed on `my-changes` as `25ec615f` (feature) and `9a9e9252` (the /simplify pass), on top of the upstream merge `30ef4934`. Pushed: `origin/my-changes` was at `9a9e9252` on 2026-10-09. The user asked to commit without reporting a manual test result, so in-app behaviour is still unconfirmed.
 
 What's verified:
 - The RAM scheme compiles. It builds `Kit` too and doesn't touch `/Applications`.
 - `testUsageReader_compressionPercent` and `testRAMPressure_textColor` passed (2026-10-03).
 
-What hasn't run yet:
-- `testRAMPressure_alertColor`, added later. It compiles but hasn't been run.
-- swiftlint. It isn't installed locally.
-- The full `Stats` scheme build after the latest edits.
-- `testProcessReader_parsePSLine`, added in the 2026-10-04 /simplify pass. It hasn't been compiled, because building the test target means a `Stats`-scheme build, which reinstalls the app.
+- `testRAMPressure_alertColor` and `testProcessReader_parsePSLine` passed, and the full `Stats` scheme built and installed (2026-10-09).
+
+What hasn't run yet: swiftlint, which isn't installed locally.
 
 ### What's built
 - **Data:** `UsageReader.compressionPercent(compressedPages:availablePages:)`, a public static pure helper. `UsageReader` was made `public` so plain `import RAM` tests can reach it. The value is stored as `RAM_Usage.compressionPercent`, computed in `UsageReader.read()` next to `pressurePercent`.

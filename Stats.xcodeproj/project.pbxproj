@@ -223,6 +223,11 @@
 		AA0000012F000001000BEEF0 /* MemoryPressure.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000022F000001000BEEF0 /* MemoryPressure.swift */; };
 		AA0000032F000001000BEEF0 /* LabeledPercent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000042F000001000BEEF0 /* LabeledPercent.swift */; };
 		AA0000052F000001000BEEF0 /* CompressionRatio.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000062F000001000BEEF0 /* CompressionRatio.swift */; };
+		CC0000012F000001000BEEF0 /* OKHSL.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000022F000001000BEEF0 /* OKHSL.swift */; };
+		CC0000032F000001000BEEF0 /* HistoryRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000042F000001000BEEF0 /* HistoryRing.swift */; };
+		CC0000052F000001000BEEF0 /* HistoryPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000062F000001000BEEF0 /* HistoryPalette.swift */; };
+		CC0000072F000001000BEEF0 /* HistoryGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000082F000001000BEEF0 /* HistoryGeometry.swift */; };
+		CC0000092F000001000BEEF0 /* CombinedHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC00000A2F000001000BEEF0 /* CombinedHistoryView.swift */; };
 		BB0000012F000001000BEEF0 /* PressureHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000022F000001000BEEF0 /* PressureHistoryView.swift */; };
 /* End PBXBuildFile section */
 
@@ -777,6 +782,11 @@
 		AA0000022F000001000BEEF0 /* MemoryPressure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryPressure.swift; sourceTree = "<group>"; };
 		AA0000042F000001000BEEF0 /* LabeledPercent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabeledPercent.swift; sourceTree = "<group>"; };
 		AA0000062F000001000BEEF0 /* CompressionRatio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompressionRatio.swift; sourceTree = "<group>"; };
+		CC0000022F000001000BEEF0 /* OKHSL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OKHSL.swift; sourceTree = "<group>"; };
+		CC0000042F000001000BEEF0 /* HistoryRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryRing.swift; sourceTree = "<group>"; };
+		CC0000062F000001000BEEF0 /* HistoryPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPalette.swift; sourceTree = "<group>"; };
+		CC0000082F000001000BEEF0 /* HistoryGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryGeometry.swift; sourceTree = "<group>"; };
+		CC00000A2F000001000BEEF0 /* CombinedHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombinedHistoryView.swift; sourceTree = "<group>"; };
 		BB0000022F000001000BEEF0 /* PressureHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PressureHistoryView.swift; sourceTree = "<group>"; };
 		B8F0D4F1259D19B100AAFAAF /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		BB9E59E725BB5F5E004AED95 /* hu */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hu; path = hu.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -1238,6 +1248,9 @@
 				5C2F5C432F8409F200B3F8AC /* preview.swift */,
 				9A81C7592449A41400825D92 /* Info.plist */,
 				9AF9EE192464A7B3005D2270 /* config.plist */,
+				CC0000062F000001000BEEF0 /* HistoryPalette.swift */,
+				CC0000082F000001000BEEF0 /* HistoryGeometry.swift */,
+				CC00000A2F000001000BEEF0 /* CombinedHistoryView.swift */,
 				BB0000022F000001000BEEF0 /* PressureHistoryView.swift */,
 			);
 			path = RAM;
@@ -1298,6 +1311,8 @@
 			children = (
 				5C038CF52D86EE8700516809 /* SystemStats.swift */,
 				9A2848022666AB2F00EC1F6D /* Store.swift */,
+				CC0000022F000001000BEEF0 /* OKHSL.swift */,
+				CC0000042F000001000BEEF0 /* HistoryRing.swift */,
 				9A2848042666AB2F00EC1F6D /* Charts.swift */,
 				9A2848032666AB2F00EC1F6D /* SystemKit.swift */,
 				9A2848072666AB3000EC1F6D /* Updater.swift */,
@@ -2286,6 +2301,8 @@
 				9A9B8C9D27149A3700218374 /* Tachometer.swift in Sources */,
 				9A2847652666AA2700EC1F6D /* Memory.swift in Sources */,
 				9A2847642666AA2700EC1F6D /* Battery.swift in Sources */,
+				CC0000012F000001000BEEF0 /* OKHSL.swift in Sources */,
+				CC0000032F000001000BEEF0 /* HistoryRing.swift in Sources */,
 				9A28480B2666AB3000EC1F6D /* Charts.swift in Sources */,
 				9A2847632666AA2700EC1F6D /* Mini.swift in Sources */,
 				5CF2210D2B1E7EAF006C583F /* notifications.swift in Sources */,
@@ -2338,6 +2355,9 @@
 				9A953A1424B9D22D0038EF4B /* settings.swift in Sources */,
 				5CF221172B1F4ACB006C583F /* notifications.swift in Sources */,
 				9A81C7692449A43600825D92 /* main.swift in Sources */,
+				CC0000052F000001000BEEF0 /* HistoryPalette.swift in Sources */,
+				CC0000072F000001000BEEF0 /* HistoryGeometry.swift in Sources */,
+				CC0000092F000001000BEEF0 /* CombinedHistoryView.swift in Sources */,
 				BB0000012F000001000BEEF0 /* PressureHistoryView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
