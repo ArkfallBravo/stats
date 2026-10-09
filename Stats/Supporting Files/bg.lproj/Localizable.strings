@@ -166,6 +166,7 @@
 "Pause the Stats" = "Паузиране на Stats";
 "Resume the Stats" = "Продължаване на Stats";
 "Combined modules" = "Комбинирани модули"; // translategemma:4b
+"Show icon instead of widgets" = "Показване на икона вместо уиджети";
 "Combined details" = "Комбинирани подробности"; // gemma4:31b
 "Spacing" = "Интервал"; // gemma4:31b
 "Choose file" = "Изберете файл"; // translategemma:4b
@@ -234,6 +235,7 @@
 "Transparent when no activity" = "Прозрачен, когато няма активност"; // translategemma:4b
 "Constant color" = "Постоянен"; // translategemma:4b
 "Custom..." = "Персонализирано...";
+"Icon widget" = "Уиджет с икона";
 
 // Module Kit
 "Open module settings" = "Отваряне на настройките на модула";

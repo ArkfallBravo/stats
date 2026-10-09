@@ -166,6 +166,7 @@
 "Pause the Stats" = "Stats pausieren";
 "Resume the Stats" = "Stats fortsetzen";
 "Combined modules" = "Kombinierte Module";
+"Show icon instead of widgets" = "Symbol statt Widgets anzeigen";
 "Combined details" = "Kombinierte Details";
 "Spacing" = "Abstand";
 "Choose file" = "Datei auswählen";
@@ -234,6 +235,7 @@
 "Transparent when no activity" = "Transparent bei Inaktivität";
 "Constant color" = "Konstant";
 "Custom..." = "Benutzerdefiniert...";
+"Icon widget" = "Symbol-Widget";
 
 // Module Kit
 "Open module settings" = "Modul-Einstellungen öffnen";

@@ -98,9 +98,12 @@
 		5E0C63682FBE5F0000D9BA3E /* reader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E0C63672FBE5F0000D9BA3E /* reader.swift */; };
 		5E0C63702FBE4A0000D9BA3E /* popup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E0C636F2FBE4A0000D9BA3E /* popup.swift */; };
 		5E6DF2573007B23A00D696BD /* uninstall.sh in Copy Files */ = {isa = PBXBuildFile; fileRef = 5CFE494129265418000F2856 /* uninstall.sh */; };
+		5E828A003074086000DB0CA0 /* Icon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E8289FF3074085D00DB0CA0 /* Icon.swift */; };
 		5EC1B2E52E2FEAFB007042A6 /* UnitedWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EC1B2E42E2FEAFB007042A6 /* UnitedWidget.swift */; };
 		5EE5C0B93062FEA400E7DAB4 /* install.sh in Resources */ = {isa = PBXBuildFile; fileRef = 5EE5C0B83062FEA400E7DAB4 /* install.sh */; };
 		5EE8037F29C36BDD0063D37D /* portal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EE8037E29C36BDD0063D37D /* portal.swift */; };
+		8B3025000000000000000001 /* Bluetooth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B3025000000000000000002 /* Bluetooth.swift */; };
+		8B3025000000000000000003 /* Bluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A11AACF266FD77F000C1C05 /* Bluetooth.framework */; };
 		9A045EB72594F8D100ED58F2 /* Dashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A045EB62594F8D100ED58F2 /* Dashboard.swift */; };
 		9A11AAD6266FD77F000C1C05 /* Bluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A11AACF266FD77F000C1C05 /* Bluetooth.framework */; };
 		9A11AAD7266FD77F000C1C05 /* Bluetooth.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9A11AACF266FD77F000C1C05 /* Bluetooth.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -639,6 +642,7 @@
 		5E0C63652FBE3F4E00D9BA3E /* settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = settings.swift; sourceTree = "<group>"; };
 		5E0C63672FBE5F0000D9BA3E /* reader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = reader.swift; sourceTree = "<group>"; };
 		5E0C636F2FBE4A0000D9BA3E /* popup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = popup.swift; sourceTree = "<group>"; };
+		5E8289FF3074085D00DB0CA0 /* Icon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icon.swift; sourceTree = "<group>"; };
 		5EC1B2E42E2FEAFB007042A6 /* UnitedWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitedWidget.swift; sourceTree = "<group>"; };
 		5EE5C0B83062FEA400E7DAB4 /* install.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = install.sh; sourceTree = "<group>"; };
 		5EE8037E29C36BDD0063D37D /* portal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = portal.swift; sourceTree = "<group>"; };
@@ -646,6 +650,7 @@
 		63A07F97275018DF00352C46 /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/Localizable.strings; sourceTree = "<group>"; };
 		"6ed2e290-b69e-4630-8e38-1ceafc12e572" /* ta */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ta; path = ta.lproj/Localizable.strings; sourceTree = "<group>"; };
 		7A19DAE52552C326001B192F /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		8B3025000000000000000002 /* Bluetooth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bluetooth.swift; sourceTree = "<group>"; };
 		9068FE5F25AC4516006FCAA6 /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = cs.lproj/Localizable.strings; sourceTree = "<group>"; };
 		9585D8482830523E007EC0D7 /* sl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sl; path = sl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		9733417025C7340700BD4D9C /* ro */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ro; path = ro.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -914,6 +919,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8B3025000000000000000003 /* Bluetooth.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1143,6 +1149,7 @@
 				AA0000022F000001000BEEF0 /* MemoryPressure.swift */,
 				AA0000042F000001000BEEF0 /* LabeledPercent.swift */,
 				AA0000062F000001000BEEF0 /* CompressionRatio.swift */,
+				5E8289FF3074085D00DB0CA0 /* Icon.swift */,
 			);
 			path = Widgets;
 			sourceTree = "<group>";
@@ -1331,6 +1338,7 @@
 				9AAC5E40280ACC210043D892 /* RAM.swift */,
 				369463B2B7EA4AF0A895A9B6 /* Kit.swift */,
 				5CFACE010000000000000001 /* GPU.swift */,
+				8B3025000000000000000002 /* Bluetooth.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -2305,6 +2313,7 @@
 				CC0000032F000001000BEEF0 /* HistoryRing.swift in Sources */,
 				9A28480B2666AB3000EC1F6D /* Charts.swift in Sources */,
 				9A2847632666AA2700EC1F6D /* Mini.swift in Sources */,
+				5E828A003074086000DB0CA0 /* Icon.swift in Sources */,
 				5CF2210D2B1E7EAF006C583F /* notifications.swift in Sources */,
 				9A6EEBBE2685259500897371 /* Logger.swift in Sources */,
 				5C4E8BC72B6EF98800F148B6 /* DB.swift in Sources */,
@@ -2400,6 +2409,7 @@
 				9AAC5E41280ACC210043D892 /* RAM.swift in Sources */,
 				4A05F9BD83C04F70BFFF7F37 /* Kit.swift in Sources */,
 				5CFACE010000000000000002 /* GPU.swift in Sources */,
+				8B3025000000000000000001 /* Bluetooth.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3185,7 +3195,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				MARKETING_VERSION = 3.0.19;
+				MARKETING_VERSION = 3.0.20;
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = eu.exelban.Stats;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3222,7 +3232,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				MARKETING_VERSION = 3.0.19;
+				MARKETING_VERSION = 3.0.20;
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = eu.exelban.Stats;
 				PRODUCT_NAME = "$(TARGET_NAME)";

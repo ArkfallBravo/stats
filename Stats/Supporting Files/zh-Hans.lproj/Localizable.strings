@@ -166,6 +166,7 @@
 "Pause the Stats" = "暂停Stats";
 "Resume the Stats" = "恢复Stats";
 "Combined modules" = "合并模块";
+"Show icon instead of widgets" = "显示图标而非小组件";
 "Combined details" = "合并详情";
 "Spacing" = "间距";
 "Choose file" = "选择文件";
@@ -234,6 +235,7 @@
 "Transparent when no activity" = "无活动时保持透明";
 "Constant color" = "恒定颜色";
 "Custom..." = "自定义...";
+"Icon widget" = "图标";
 
 // Module Kit
 "Open module settings" = "打开模块设置";

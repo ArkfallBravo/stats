@@ -166,6 +166,7 @@
 "Pause the Stats" = "आँकड़ों को रोकें";
 "Resume the Stats" = "आँकड़े फिर से शुरू करें";
 "Combined modules" = "संयुक्त मॉड्यूल";
+"Show icon instead of widgets" = "विजेट के बजाय आइकन दिखाएँ";
 "Combined details" = "संयुक्त विवरण"; // translategemma:4b
 "Spacing" = "स्पेसिंग";
 "Choose file" = "फ़ाइल चुनें"; // translategemma:4b
@@ -234,6 +235,7 @@
 "Transparent when no activity" = "कोई गतिविधि न होने पर पारदर्शी"; // gemma4:31b
 "Constant color" = "स्थिर"; // translategemma:4b
 "Custom..." = "कस्टम...";
+"Icon widget" = "आइकन विजेट";
 
 // Module Kit
 "Open module settings" = "ओपन मॉड्यूल सेटिंग्स";

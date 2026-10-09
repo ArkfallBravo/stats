@@ -135,6 +135,13 @@
 				<integer>42</integer>
 			</dict>
 		</dict>
+		<key>icon</key>
+		<dict>
+			<key>Default</key>
+			<false/>
+			<key>Order</key>
+			<integer>11</integer>
+		</dict>
 	</dict>
 	<key>Settings</key>
 	<dict>

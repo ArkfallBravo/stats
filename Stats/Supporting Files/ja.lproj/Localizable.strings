@@ -166,6 +166,7 @@
 "Pause the Stats" = "Statsを一時停止"; // gemma4:31b
 "Resume the Stats" = "Statsを再開"; // gemma4:31b
 "Combined modules" = "統合モジュール"; // translategemma:4b
+"Show icon instead of widgets" = "ウィジェットの代わりにアイコンを表示";
 "Combined details" = "統合された詳細"; // translategemma:4b
 "Spacing" = "間隔"; // translategemma:4b
 "Choose file" = "ファイルを選択"; // gemma4:31b
@@ -234,6 +235,7 @@
 "Transparent when no activity" = "アクティビティがない時に透明"; // gemma4:31b
 "Constant color" = "固定"; // gemma4:31b
 "Custom..." = "カスタム...";
+"Icon widget" = "アイコンウィジェット";
 
 // Module Kit
 "Open module settings" = "このモジュールの設定を開く";
