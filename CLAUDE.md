@@ -23,7 +23,7 @@ There's no standalone `Tests` scheme — the test target (`Tests.xctest`) is wir
 ```bash
 xcodebuild test -scheme Stats -destination 'platform=macOS'
 ```
-Run a single test with `-only-testing:Tests/<ClassName>/<testMethodName>`. Tests currently live in `Tests/Kit.swift` (pure-logic tests against `Kit`, e.g. version comparison, unit formatting) and `Tests/RAM.swift`.
+Run a single test with `-only-testing:Tests/<ClassName>/<testMethodName>`. Tests live in `Tests/<Module>.swift` (e.g. `Kit.swift` for pure `Kit` logic, plus `RAM`, `GPU`, `Disk`, `Bluetooth`, `SMC`). Module tests that need internals use `@testable import <Module>`. As of 2026-11-06, two tests fail regardless of any change: `KitTests/testIsNewestVersion_beta` (a real `isNewestVersion` bug) and `RAM/testProcessReader_parseProcess` (it depends on which pids are live). The root causes are in `docs/todo.md`.
 
 ### Lint
 ```bash
@@ -32,7 +32,7 @@ swiftlint
 swiftlint isn't installed on the dev machine as of 2026-10, so lint only runs in CI. Rules are in `.swiftlint.yml` at the repo root (`opening_brace` is disabled, so Allman braces pass); CI runs this on every push/PR touching `*.swift` (`.github/workflows/linter.yaml`). Several rules are deliberately disabled (`force_cast`, `type_name`, `cyclomatic_complexity`, etc.) — don't re-enable them incidentally by "fixing" unrelated code.
 
 ### Living docs
-`docs/plan.md` holds in-flight work; `docs/todo.md` holds outstanding items. The xnu kernel source is checked out next to this repo at `../xnu`. Use it for memory pressure and VM questions; `docs/plan.md` cites the relevant spots.
+`docs/plan.md` holds in-flight work; `docs/todo.md` holds outstanding items. Read `docs/alternatives.md` before redesigning a piece or when a fix isn't working; it records rejected and deferred designs. Finished initiatives are archived in `docs/archive/`. The xnu kernel source is checked out next to this repo at `../xnu`. Use it for memory pressure and VM questions; `docs/archive/ram-compression-and-history-charts.md` cites the relevant spots.
 
 ### i18n check
 `.strings` files are validated by `python3 Kit/scripts/i18n.py` (CI: `.github/workflows/i18n.yaml`) — checks translation key consistency across locales.

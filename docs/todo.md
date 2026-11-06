@@ -1,13 +1,44 @@
 # todo.md
 
 - Fix the RAM "Memory pressure percent" notification subtitle. `Modules/RAM/notifications.swift` calls `localizedString("Memory pressure is", "<n>%")`, but that key isn't in any `Localizable.strings`. `localizedString` (`Kit/helpers.swift`) then returns the bare key with no `%0` to substitute, so the notification never shows the number. Either add the key (`"Memory pressure is" = "Memory pressure is %0";`) or use the `"<label>: <value>"` pattern the swap notification uses.
-- Clean up the iCloud duplicates `Modules/RAM/PressureHistoryView 2.swift` and `scripts/sync-upstream 2.sh`. Both are untracked. `scripts/sync-upstream 2.sh` is byte-identical to the original. `PressureHistoryView 2.swift` is **not**: it adds a `ts: Date` field to `Point`, set to `Date()` in `addValue`. Check with the user whether that was intended work before deleting it.
+- Clean up the untracked iCloud duplicates `Modules/RAM/PressureHistoryView 2.swift`, `scripts/sync-upstream 2.sh`, `Kit/Widgets/Icon 2.swift` and `Tests/SMC 2.swift` (the last two appeared during the 2026-10-09 upstream merge). Every one except `PressureHistoryView 2.swift` is byte-identical to its original. `PressureHistoryView 2.swift` is **not**: it adds a `ts: Date` field to `Point`, set to `Date()` in `addValue`. Check with the user whether that was intended work before deleting it.
 - Unanswered question for the user: should the standardized file header from the global CLAUDE.md be applied to upstream-owned files when the compression-ratio work touches them? So far only fork-owned files have it (`MemoryPressure.swift`, `LabeledPercent.swift`, `CompressionRatio.swift`). Rewriting upstream headers would add merge-conflict surface on every upstream sync.
-- swiftlint isn't installed locally, so either install it or rely on CI. The default `statement_position` rule probably flags the fork's Allman `}` / `else` lines.
 - Optional: surface the second critical trigger, the compressor nearly full (`vm.compressor.segment.total`/`.limit`), alongside the compression ratio.
 - Consider feeding all the RAM popup charts every tick. Today the hidden charts get no data, and `PressureHistoryView.reinit`/`CombinedHistoryView.reinit` wipe their history, unlike `LineChartView.reinit`, which keeps points.
 - Decide on the fork's `StepperInput` change in `Kit/helpers.swift`. The fixed 80pt width now applies to every unit-less stepper, which also changes Net's steppers and adds conflict surface in upstream's busiest file. The alternative is sizing the Battery "min" stepper at its call site.
 - Decide on `formatMinutes` in `Modules/Battery/notifications.swift`. It formats durations differently from `printSecondsToHoursMinutesSeconds()`, used a few lines above, and needs four extra localization keys.
 - Optional: move `RAMPressure.alertColor()`/`textColor()` out of the upstream enum body into a fork-owned extension, to shrink merge-conflict surface.
-- Optional, measure first: GPU `clientUsage` copies each client's full property dictionary via `getIOProperties`, when it only needs `IOUserClientCreator` and `AppUsage`.
-- `testIsNewestVersion_beta` fails (`Tests/Kit.swift:27-28`): `isNewestVersion` returns true for an identical beta and for an older beta. It's upstream code in Kit that the fork hasn't touched, so first check whether upstream `master` fails the same way before fixing it here.
+- **Source-sync updater (tabled 2026-11-06, decided but not started).** Make the app's update flow run `scripts/sync-upstream.sh` instead of downloading exelban's DMG. Today the stock flow would replace the fork with vanilla Stats. It also can't install anyway: `Updater.validateAppSignature` requires matching team IDs, and the ad-hoc build has none. The version check itself works: `MARKETING_VERSION` arrives through the upstream merges.
+  - **Decided by the user:**
+    - Clicking the update notification, or the Update window's button, opens the script in Terminal.
+    - **Silent** mode (the default `update-interval`) runs it unattended and posts a result notification.
+    - Fix the two failing tests first and keep the strict all-tests-pass gate.
+    - `brew install swiftlint`, so the lint gate matches CI.
+  - **Order:** (1) fix the tests, one commit each; (2) install swiftlint and run it once on the tree to get a baseline before trusting it as a gate; (3) script changes; (4) app changes. Commit the app changes only after the user has tested a real sync from the installed app.
+  - **Test fixes, root causes found:**
+    - `testIsNewestVersion_beta` (`Tests/Kit.swift:27-28`) is a real bug in `isNewestVersion` (`Kit/helpers.swift`). Its both-beta branch uses `latest.patch >= current.patch && …`, which returns true for equal versions. Minimal fix: make that `>`, and add a beta-number comparison that applies only when major, minor and patch are equal. That's upstream code, so it adds fork drift; it could go upstream as a PR.
+    - `RAM/testProcessReader_parseProcess` is environment-dependent. `parseProcess` replaces the name via `NSRunningApplication(processIdentifier:)`, so a live app at a test pid breaks it (pid 623 was `CoreServicesUIAgent`). Move every pid in that test above `PID_MAX` (99999, `../xnu/bsd/sys/proc_internal.h:753`), not just 623.
+  - **Script constraints (`scripts/sync-upstream.sh`):**
+    - `cd` to the repo root itself.
+    - Prepend `/opt/homebrew/bin` to PATH, because GUI-launched processes don't have it.
+    - Use `git status --porcelain --untracked-files=no`, because the untracked iCloud duplicates otherwise always count as dirty.
+    - Add `CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM=` to both `xcodebuild` calls.
+    - Run the gate build and test with `DEPLOYMENT_LOCATION=NO`. Otherwise the Stats Debug build installs a merge that later gets rolled back into /Applications. Verify the override really leaves /Applications alone, then do the installing build only after the merge commit.
+    - Stash and pop tracked WIP in the Terminal path.
+    - Add a lock file so an at-start run and a manual click can't overlap.
+  - **App constraints:**
+    - Bake the repo path in via an Info.plist key set to `$(SRCROOT)`. The path has spaces and `~`, so quote it everywhere.
+    - Route the four download+install call sites through one launcher: `AppDelegate.userNotificationCenter`, the `checkForNewVersion(silent:)` path in `Stats/helpers.swift`, and `Update.swift`'s download and install.
+    - Run the unattended script detached, the way `restartApp` (`Kit/helpers.swift`) detaches `sh`. The build replaces the running app, and `xcodebuild test` starts a second Stats instance.
+    - Have the script relaunch Stats at the end and write a result file (merged, or rolled back with the reason and the log path). The relaunched app reads that file and posts the notification.
+    - Record a failed upstream SHA and skip unattended retries until upstream moves, since Silent checks on every launch.
+    - Probe early whether macOS privacy (TCC) prompts for iCloud Drive access stall an unattended run from an ad-hoc app whose signature changes on every rebuild.
+  - **Still open, to ask the user:**
+    - When an unattended run finds tracked uncommitted changes, should it skip and notify (recommended), or stash and pop?
+    - Should `Updater.download`/`install` stay unused but unchanged, to keep upstream merges clean (recommended)?
+    - Should the `isNewestVersion` fix go upstream as a PR?
+- **Open a PR to `exelban/stats` with the fork's RAM work** (requested 2026-11-06). The scope is still to settle with the user: compression ratio, the CMPR widget, the compression/combined history charts with OKHSL, the pickable chart colors, and the memory-pressure additions. Things to plan for:
+  - Branch from `master` (upstream), not `my-changes`. Cherry-pick or re-split the RAM commits into coherent PR commits.
+  - Leave out the fork-only pieces: the Debug DSTROOT install to /Applications, `scripts/`, `docs/`, and the fork's file headers.
+  - Add strings to every locale so `Kit/scripts/i18n.py` passes, and get `swiftlint` clean.
+  - Probably finish the RAM history color work (`docs/plan.md`) first.
