@@ -68,6 +68,7 @@ public class UsageReader: Reader<RAM_Usage> {
             let pressurePercent: Int = max(0, min(100, 100 - memoryStatusLevel))
             let availablePages = UInt64(stats.free_count) + UInt64(stats.active_count) + UInt64(stats.inactive_count)
             let compressionPercent = UsageReader.compressionPercent(compressedPages: UInt64(stats.compressor_page_count), availablePages: availablePages)
+            let compressionRatio = UsageReader.compressionRatio(compressedPages: UInt64(stats.compressor_page_count), availablePages: availablePages)
             
             var pressureValue: RAMPressure
             switch pressureLevel {
@@ -101,6 +102,7 @@ public class UsageReader: Reader<RAM_Usage> {
                 pressure: Pressure(level: pressureLevel, value: pressureValue),
                 pressurePercent: pressurePercent,
                 compressionPercent: compressionPercent,
+                compressionRatio: compressionRatio,
 
                 swapins: swapins,
                 swapouts: swapouts
@@ -120,6 +122,17 @@ public class UsageReader: Reader<RAM_Usage> {
             return 0
         }
         return Int(compressedPages * 100 / pageablePages)
+    }
+
+    // Returns C/(A+C) as an unrounded fraction from 0 to 1.
+    public static func compressionRatio(compressedPages: UInt64, availablePages: UInt64) -> Double
+    {
+        let pageablePages = compressedPages + availablePages
+        if pageablePages == 0
+        {
+            return 0
+        }
+        return Double(compressedPages) / Double(pageablePages)
     }
 }
 

@@ -12,6 +12,13 @@
 import Cocoa
 import Kit
 
+// Compression ratio gauge bands at the kernel's warning (1/2) and critical (23/35) thresholds for Macs over 3 GB.
+private let compressionGaugeSegments: [ColorValue] = [
+    ColorValue(1/2, color: NSColor.systemGreen),
+    ColorValue(23/35 - 1/2, color: NSColor.systemYellow),
+    ColorValue(1 - 23/35, color: NSColor.systemRed)
+]
+
 internal class Popup: PopupWrapper {
     private var grid: NSGridView? = nil
     
@@ -160,13 +167,9 @@ internal class Popup: PopupWrapper {
         let circleContainer = NSView()
         circleContainer.addSubview(circle)
         
-        let gauge = GaugeChartView(segments: [
-            ColorValue(1/3, color: NSColor.systemGreen),
-            ColorValue(1/3, color: NSColor.systemYellow),
-            ColorValue(1/3, color: NSColor.systemRed)
-        ], title: localizedString("Normal"))
+        let gauge = GaugeChartView(segments: compressionGaugeSegments, title: localizedString("Normal"))
         gauge.translatesAutoresizingMaskIntoConstraints = false
-        gauge.toolTip = localizedString("Memory pressure")
+        gauge.toolTip = localizedString("Compression ratio")
         self.level = gauge
         
         let gaugeContainer = NSView()
@@ -335,9 +338,9 @@ internal class Popup: PopupWrapper {
         self.circle?.setNonActiveSegmentColor(self.freeColor)
         self.circle?.display()
         
-        self.level?.setActiveSegment(value.pressure.value.number())
+        self.level?.setNeedle(value.compressionRatio)
         self.level?.setTitle(localizedString(value.pressure.value.rawValue.capitalized))
-        self.level?.toolTip = "\(localizedString("Memory pressure")): \(value.pressure.value.rawValue)"
+        self.level?.toolTip = "\(localizedString("Compression ratio")): \(value.compressionPercent)%"
         self.level?.display()
         
         self.bar.setValues(values)

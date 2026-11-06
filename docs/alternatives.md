@@ -18,3 +18,9 @@ Designs that were considered but not chosen. Read this before redesigning one of
 - **Rejected: Silent mode only notifies** and never runs the script unattended. This was the safer default, but the user wanted hands-off syncing with a result notification.
 - **Rejected test gates:** comparing the failing-test set before and after the merge (exact, but the suite runs twice), and `-skip-testing` the known failures (the list needs upkeep and hides the tests). The user chose fixing the two failing tests and keeping a strict gate. **Baseline comparison would come back if** upstream starts shipping tests that fail often on this machine.
 - **Rejected: skip lint when swiftlint is missing.** The user chose installing it.
+
+## RAM popup gauge: title and band thresholds (decided 2026-11-06)
+- **Chosen:** the title shows the kernel pressure level, and the critical band starts at 23/35 (~65.7%).
+- **Rejected after trying it: the ratio percent as the title.** It hid the only pressure-level name in the popup and repeated the details row's number.
+- **Rejected: a 2/3 (66.6%) critical band.** It sits about a point above the kernel's real threshold.
+- **Would come back if** the gauge moves somewhere without the details row, so the number has no other home.

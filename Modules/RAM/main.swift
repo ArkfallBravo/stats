@@ -29,6 +29,7 @@ public struct RAM_Usage: Codable, RemoteType {
     var pressure: Pressure
     var pressurePercent: Int = 0
     var compressionPercent: Int = 0
+    var compressionRatio: Double = 0
 
     var swapins: Int64
     var swapouts: Int64

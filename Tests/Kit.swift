@@ -184,4 +184,23 @@ class KitTests: XCTestCase {
         ring.append(7)
         XCTAssertEqual(ring.ordered(), [6, 7])
     }
+    
+    func testGaugeChartView_needleAngle() throws
+    {
+        let segments = [ColorValue(1/2), ColorValue(1/6), ColorValue(1/3)]
+        let gap = 0.025 * CGFloat.pi
+        let drawSpan = CGFloat.pi - 2 * gap
+        let accuracy: CGFloat = 1e-9
+        
+        XCTAssertEqual(GaugeChartView.needleAngle(0, in: segments), CGFloat.pi, accuracy: accuracy)
+        XCTAssertEqual(GaugeChartView.needleAngle(0.25, in: segments), CGFloat.pi - drawSpan / 4, accuracy: accuracy)
+        XCTAssertEqual(GaugeChartView.needleAngle(0.5, in: segments), CGFloat.pi - drawSpan / 2, accuracy: accuracy)
+        XCTAssertEqual(GaugeChartView.needleAngle(0.6, in: segments), CGFloat.pi - drawSpan * 0.6 - gap, accuracy: accuracy)
+        XCTAssertEqual(GaugeChartView.needleAngle(5/6, in: segments), CGFloat.pi - drawSpan * 5/6 - 2 * gap, accuracy: accuracy)
+        XCTAssertEqual(GaugeChartView.needleAngle(1, in: segments), 0, accuracy: accuracy)
+        XCTAssertEqual(GaugeChartView.needleAngle(1.5, in: segments), 0, accuracy: accuracy)
+        XCTAssertEqual(GaugeChartView.needleAngle(-1, in: segments), CGFloat.pi, accuracy: accuracy)
+        XCTAssertEqual(GaugeChartView.needleAngle(0.5, in: [ColorValue(1)]), CGFloat.pi / 2, accuracy: accuracy)
+        XCTAssertEqual(GaugeChartView.needleAngle(0.5, in: []), CGFloat.pi, accuracy: accuracy)
+    }
 }

@@ -84,3 +84,12 @@ First worked out in session `e984b0fc-bf61-4c93-b331-a4b66b688721` (claude-histo
 - **Divisors can't be read at runtime.** The `vm.compressor_*_threshold_divisor` sysctls exist only on DEVELOPMENT/DEBUG kernels (`bsd/kern/kern_sysctl.c:4559`). The 50%/~66% figures appear only in the text-token help and the notification default.
 - **A reads slightly high.** `vm_statistics64.active_count` includes the per-CPU local queues, which the kernel's A leaves out.
 - **The number can't show the compressor-full trigger.** The tint does, because it comes from the kernel level. Surfacing compressor fullness is optional and listed in `todo.md`.
+
+## Compression ratio gauge in the RAM popup (added 2026-11-06)
+- **The popup gauge's needle and bands show the compression ratio C/(A+C). Its title still shows the kernel pressure level** ("Normal", "Warning", "Critical"), and the tooltip reads "Compression ratio: 58%". The needle's band can disagree with the title, because of the kernel's hysteresis and its compressor-full trigger. The user accepted that.
+- **Bands (`compressionGaugeSegments`, top of `Modules/RAM/popup.swift`):** green to 1/2, yellow to 23/35 (~65.7%), red above. These are the kernel's warning and critical thresholds for Macs over 3 GB (see the background section above).
+- **Exact ratio:** the needle uses `RAM_Usage.compressionRatio` (Double), from `UsageReader.compressionRatio(...)`, not the floored `compressionPercent`. With the floored value, 65.9% would land in yellow.
+- **Kit change (upstream file, merge-conflict surface):** `GaugeChartView` in `Kit/plugins/Charts.swift` gained `setNeedle(_:)` plus static `segmentRanges(_:)` and `needleAngle(_:in:)`. Before this, the needle could only point at a segment's midpoint. `setActiveSegment` still works and clears the needle value.
+- **Not changed:** the settings-window preview gauge (`Modules/RAM/preview.swift`) still shows the pressure level, next to its pressure-level chart.
+- **Pitfall hit:** the bands constant first lived in `Modules/RAM/main.swift`. Globals there are never initialized in a framework, so the gauge crashed at launch (see `CLAUDE.md`).
+- **Tests:** `KitTests/testGaugeChartView_needleAngle` and `RAM/testUsageReader_compressionRatio`.

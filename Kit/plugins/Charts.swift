@@ -1140,6 +1140,7 @@ public class TachometerGraphView: ChartView {
 public class GaugeChartView: ChartView {
     private var segments: [ColorValue]
     private var activeSegment: Int? = nil
+    private var needleValue: Double? = nil
     private var title: String? = nil
     
     public init(frame: NSRect = .zero, segments: [ColorValue], title: String? = nil, animation: Bool = true) {
@@ -1159,10 +1160,12 @@ public class GaugeChartView: ChartView {
     public override func draw(_ rect: CGRect) {
         var segments: [ColorValue] = []
         var activeSegment: Int? = nil
+        var needleValue: Double? = nil
         var title: String? = nil
         self.read {
             segments = self.segments
             activeSegment = self.activeSegment
+            needleValue = self.needleValue
             title = self.title
         }
         guard let context = NSGraphicsContext.current?.cgContext, !segments.isEmpty else { return }
@@ -1175,19 +1178,7 @@ public class GaugeChartView: ChartView {
         let availableHeight = self.frame.height - bottomPadding
         let radius = min(self.frame.width/2, availableHeight) - arcWidth/2 - 1
         
-        let total = segments.reduce(0) { $0 + $1.value }
-        let count = segments.count
-        let gap: CGFloat = count > 1 ? 0.025 * CGFloat.pi : 0
-        let drawSpan = CGFloat.pi - gap * CGFloat(count - 1)
-        
-        var ranges: [(start: CGFloat, end: CGFloat)] = []
-        var previousAngle = CGFloat.pi
-        for segment in segments {
-            let frac: CGFloat = total > 0 ? CGFloat(segment.value)/CGFloat(total) : 0
-            let currentAngle = previousAngle - frac * drawSpan
-            ranges.append((previousAngle, currentAngle))
-            previousAngle = currentAngle - gap
-        }
+        let ranges = GaugeChartView.segmentRanges(segments)
         
         context.setLineWidth(arcWidth)
         context.setLineCap(.round)
@@ -1200,9 +1191,17 @@ public class GaugeChartView: ChartView {
             context.strokePath()
         }
         
-        if let activeSegment, activeSegment >= 0, activeSegment < ranges.count {
-            let range = ranges[activeSegment]
-            let needleAngle = (range.start + range.end) / 2
+        var needleAngle: CGFloat? = nil
+        if let needleValue
+        {
+            needleAngle = GaugeChartView.needleAngle(needleValue, in: segments)
+        }
+        else if let activeSegment, activeSegment >= 0, activeSegment < ranges.count
+        {
+            needleAngle = (ranges[activeSegment].start + ranges[activeSegment].end) / 2
+        }
+        
+        if let needleAngle {
             let needleEndSize: CGFloat = 2
             let needleLength = radius - arcWidth/2 - 1
 
@@ -1258,8 +1257,65 @@ public class GaugeChartView: ChartView {
     }
     
     public func setActiveSegment(_ index: Int) {
-        self.write { self.activeSegment = index }
+        self.write
+        {
+            self.activeSegment = index
+            self.needleValue = nil
+        }
         self.fadeOrDisplay()
+    }
+    
+    // Points the needle at value, a 0...1 fraction of the segments' total.
+    public func setNeedle(_ value: Double)
+    {
+        self.write
+        {
+            self.needleValue = value
+            self.activeSegment = nil
+        }
+        self.fadeOrDisplay()
+    }
+    
+    // Returns each segment's start and end angle, from pi down to 0 with gaps between segments.
+    public static func segmentRanges(_ segments: [ColorValue]) -> [(start: CGFloat, end: CGFloat)]
+    {
+        let total = segments.reduce(0) { $0 + $1.value }
+        let count = segments.count
+        let gap: CGFloat = count > 1 ? 0.025 * CGFloat.pi : 0
+        let drawSpan = CGFloat.pi - gap * CGFloat(count - 1)
+        
+        var ranges: [(start: CGFloat, end: CGFloat)] = []
+        var previousAngle = CGFloat.pi
+        for segment in segments
+        {
+            let frac: CGFloat = total > 0 ? CGFloat(segment.value)/CGFloat(total) : 0
+            let currentAngle = previousAngle - frac * drawSpan
+            ranges.append((previousAngle, currentAngle))
+            previousAngle = currentAngle - gap
+        }
+        return ranges
+    }
+    
+    // Returns the angle where value (a 0...1 fraction of the total) falls, interpolated within its segment's arc.
+    public static func needleAngle(_ value: Double, in segments: [ColorValue]) -> CGFloat
+    {
+        let ranges = GaugeChartView.segmentRanges(segments)
+        let total = segments.reduce(0) { $0 + $1.value }
+        guard total > 0 else { return CGFloat.pi }
+        
+        let target = min(max(value, 0), 1) * total
+        var segmentStart: Double = 0
+        for (index, segment) in segments.enumerated()
+        {
+            let segmentEnd = segmentStart + segment.value
+            if segment.value > 0 && target <= segmentEnd
+            {
+                let fraction = CGFloat((target - segmentStart) / segment.value)
+                return ranges[index].start + (ranges[index].end - ranges[index].start) * fraction
+            }
+            segmentStart = segmentEnd
+        }
+        return ranges.last?.end ?? CGFloat.pi
     }
     
     public func setTitle(_ value: String) {

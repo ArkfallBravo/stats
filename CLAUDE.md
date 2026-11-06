@@ -71,6 +71,7 @@ Each system-monitoring feature (CPU, GPU, RAM, Disk, Net, Battery, Sensors, Blue
 
 A module target follows a fixed file layout:
 - `main.swift` — the `class X: Module` subclass, plus any `Codable`/`RemoteType` data structs for that module's readings
+  - **Never put a global `let`/`var` in a module's `main.swift`.** Swift treats `main.swift` as top-level script code, so its globals are initialized only when that code runs, and in a framework it never does. The global reads as zeroed memory and crashes (found 2026-11-06: a null `[ColorValue]` crashed `GaugeChartView.draw` at launch). Put module globals in another file.
 - `readers.swift` — one or more `Reader_p`/`Reader<T>` subclasses that poll system data on an interval
 - `config.plist` / `Info.plist` — declares the module's name, icon symbol, available widgets, and settings schema; `module_c` (`Kit/module/module.swift`) parses this at init
 - `widget.swift`, `popup.swift`, `portal.swift`, `settings.swift`, `notifications.swift`, `preview.swift` — the module's menu bar widget view, popup (dropdown) view, "combined view" portal row, settings pane, notification thresholds UI, and window preview, respectively
