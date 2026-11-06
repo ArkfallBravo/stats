@@ -61,22 +61,22 @@ internal final class FormatterCache {
         return formatter.string(fromByteCount: bytes)
     }
     
-    func decimal(_ value: Double, maximumFractionDigits: Int) -> String? {
+    func decimal(_ value: Double, fractionDigits: Int) -> String? {
         self.lock.lock()
         defer { self.lock.unlock() }
         
         let formatter: NumberFormatter
-        if let cached = self.number[maximumFractionDigits] {
+        if let cached = self.number[fractionDigits] {
             formatter = cached
         } else {
             formatter = NumberFormatter()
             formatter.numberStyle = .decimal
             formatter.decimalSeparator = "."
             formatter.usesGroupingSeparator = false
-            formatter.minimumFractionDigits = 0
-            formatter.maximumFractionDigits = maximumFractionDigits
+            formatter.minimumFractionDigits = fractionDigits
+            formatter.maximumFractionDigits = fractionDigits
             
-            self.number[maximumFractionDigits] = formatter
+            self.number[fractionDigits] = formatter
         }
         return formatter.string(from: NSNumber(value: value))
     }
@@ -687,6 +687,7 @@ open class ScrollableStackView: NSView {
         self.clipView.drawsBackground = false
         
         self.stackView.orientation = orientation
+        self.stackView.setHuggingPriority(.defaultHigh, for: orientation == .vertical ? .horizontal : .vertical)
         self.stackView.translatesAutoresizingMaskIntoConstraints = false
         
         self.scrollView.translatesAutoresizingMaskIntoConstraints = false

@@ -37,9 +37,12 @@ public struct RAM_Usage: Codable, RemoteType {
         get { Double((self.total - self.free) / self.total) }
     }
     
-    public func remote() -> Data? {
-        let string = "\(self.total),\(self.used),\(self.pressure.level),\(self.swap.used)$"
-        return string.data(using: .utf8)
+    public func remote() -> String? {
+        guard let total = Int64(exactly: self.total),
+              let used = Int64(exactly: self.used),
+              let swap = Int64(exactly: self.swap.used) else { return nil }
+        let string = "\(total),\(used),,\(swap)$"
+        return string
     }
 }
 
@@ -134,11 +137,13 @@ public class RAM: Module {
         self.processReader = ProcessReader(.RAM) { [weak self] value in
             if let list = value {
                 self?.popupView.processCallback(list)
+                self?.previewView.processCallback(list)
             }
         }
         
         self.settingsView.callbackWhenUpdateNumberOfProcesses = { [weak self] in
             self?.popupView.numberOfProcessesUpdated()
+            self?.previewView.numberOfProcessesUpdated()
             DispatchQueue.global(qos: .background).async {
                 self?.processReader?.read()
             }

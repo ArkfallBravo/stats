@@ -105,10 +105,10 @@ public struct Network_Usage: Codable, RemoteType {
         self.wifiDetails.reset()
     }
     
-    public func remote() -> Data? {
+    public func remote() -> String? {
         let addr = "\(self.laddr.v4 ?? ""),\(self.laddr.v6 ?? ""),\(self.raddr.v4 ?? ""),\(self.raddr.v6 ?? "")"
         let string = "1,\(self.interface?.BSDName ?? ""),1,\(self.bandwidth.download),\(self.bandwidth.upload),\(addr)$"
-        return string.data(using: .utf8)
+        return string
     }
 }
 
@@ -196,6 +196,7 @@ public class Network: Module {
         self.processReader = ProcessReader(.network) { [weak self] value in
             if let list = value {
                 self?.popupView.processCallback(list)
+                self?.previewView.processCallback(list)
             }
         }
         self.connectivityReader = ConnectivityReader(.network) { [weak self] value in
@@ -205,6 +206,7 @@ public class Network: Module {
         self.settingsView.callbackWhenUpdateNumberOfProcesses = { [weak self] in
             guard let self else { return }
             self.popupView.numberOfProcessesUpdated()
+            self.previewView.numberOfProcessesUpdated()
             DispatchQueue.global(qos: .background).async { [weak self] in
                 self?.processReader?.read()
             }

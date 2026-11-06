@@ -146,6 +146,7 @@
 "No notifications available in this module" = "אין התראות זמינות במודול זה"; // translategemma:4b
 "Open Calendar" = "פתח את לוח השנה"; // gemma4:31b
 "Toggle the module" = "החלף את המודול"; // gemma4:31b
+"Preview is unavailable while module is disabled." = "התצוגה המקדימה אינה זמינה כאשר המודול מושבת.";
 "Open System Stats" = "פתח את System Stats"; // gemma4:31b
 "Close module settings" = "סגור את הגדרות המודול"; // qwen3.8:27b
 
@@ -236,6 +237,7 @@
 "Constant color" = "קבוע"; // translategemma:4b
 "Custom..." = "מותאם אישית...";
 "Icon widget" = "ווידג'ט סמל";
+"Animate icon" = "הנפשת הסמל";
 
 // Module Kit
 "Open module settings" = "פתח/י הגדרות מודל";
@@ -555,6 +557,7 @@
 "Identificator" = "מזהה"; // qwen3.8:27b
 "Plan" = "תוכנית"; // qwen3.8:27b
 "Monitoring" = "ניטור"; // qwen3.8:27b
+"Modules" = "מודולים";
 "Control" = "בקרה"; // qwen3.8:27b
 "Update" = "עדכון"; // qwen3.8:27b
 "Sign in" = "התחבר"; // qwen3.8:27b

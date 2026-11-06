@@ -45,8 +45,6 @@ internal func smartCriticalWarnings(_ value: Int) -> [String] {
 }
 
 public struct drive: Codable {
-    var parent: io_object_t = 0
-    
     var uuid: String = ""
     var mediaName: String = ""
     var BSDName: String = ""
@@ -85,7 +83,8 @@ public struct drive: Codable {
     }
     
     public func remote() -> String {
-        return "\(self.uuid),\(self.size),\(self.size-self.free),\(self.free),\(self.activity.read),\(self.activity.write)"
+        let id = self.root ? disk_s.startupVolumeGroupID ?? self.uuid : self.uuid
+        return "\(id),\(self.size),\(self.size-self.free),,\(self.activity.read),\(self.activity.write)"
     }
 }
 
@@ -159,34 +158,18 @@ public class Disks: Codable, RemoteType {
         self.array[idx].free = newValue
     }
     
-    func updateReadWrite(_ idx: Int, read: Int64, write: Int64) {
-        self.array[idx].activity.readBytes = read
-        self.array[idx].activity.writeBytes = write
-    }
-    
-    func updateRead(_ idx: Int, newValue: Int64) {
-        self.array[idx].activity.read = newValue
-    }
-    
-    func updateWrite(_ idx: Int, newValue: Int64) {
-        self.array[idx].activity.write = newValue
-    }
-    
     func updateSMARTData(_ idx: Int, smart: smart_t?) {
         self.array[idx].smart = smart
     }
     
-    public func remote() -> Data? {
+    public func remote() -> String? {
         let arr = self.array.filter({ !$0.removable })
-        var string = "\(arr.count),"
-        for (i, v) in arr.enumerated() {
-            string += v.remote()
-            if i != self.array.count {
-                string += ","
-            }
+        var string = "\(arr.count)"
+        for v in arr {
+            string += ",\(v.remote())"
         }
         string += "$"
-        return string.data(using: .utf8)
+        return string
     }
 }
 
@@ -271,6 +254,7 @@ public class Disk: Module {
         self.processReader = ProcessReader(.disk) { [weak self] value in
             if let list = value {
                 self?.popupView.processCallback(list)
+                self?.previewView.processCallback(list)
             }
         }
         self.smartReader = SMARTReader(.disk) { [weak self] value in
@@ -297,6 +281,7 @@ public class Disk: Module {
         }
         self.settingsView.callbackWhenUpdateNumberOfProcesses = { [weak self] in
             self?.popupView.numberOfProcessesUpdated()
+            self?.previewView.numberOfProcessesUpdated()
             DispatchQueue.global(qos: .background).async {
                 self?.processReader?.read()
             }

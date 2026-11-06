@@ -19,8 +19,16 @@ internal class UsageReader: Reader<Battery_Usage> {
     private var loop: CFRunLoop?
     
     private var usage: Battery_Usage = Battery_Usage()
+    private let readLock = NSLock()
+    
+    public override func setup() {
+        self.defaultInterval = 5
+    }
     
     deinit {
+        if let source = self.source {
+            CFRunLoopSourceInvalidate(source)
+        }
         if self.service != 0 {
             IOObjectRelease(self.service)
             self.service = 0
@@ -28,10 +36,12 @@ internal class UsageReader: Reader<Battery_Usage> {
     }
     
     public override func start() {
-        self.active = true
+        super.start()
+        guard self.source == nil else { return }
+        
         let context = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
         
-        self.source = IOPSNotificationCreateRunLoopSource({ (context) in
+        guard let source = IOPSNotificationCreateRunLoopSource({ (context) in
             guard let ctx = context else {
                 return
             }
@@ -40,24 +50,31 @@ internal class UsageReader: Reader<Battery_Usage> {
             if watcher.active {
                 watcher.read()
             }
-        }, context).takeRetainedValue()
+        }, context)?.takeRetainedValue() else {
+            return
+        }
         
+        self.source = source
         self.loop = RunLoop.current.getCFRunLoop()
         CFRunLoopAddSource(self.loop, source, .defaultMode)
-        
-        self.read()
     }
     
     public override func stop() {
+        super.stop()
         guard let runLoop = loop, let source = source else {
             return
         }
         
-        self.active = false
         CFRunLoopRemoveSource(runLoop, source, .defaultMode)
+        CFRunLoopSourceInvalidate(source)
+        self.source = nil
+        self.loop = nil
     }
     
     public override func read() {
+        self.readLock.lock()
+        defer { self.readLock.unlock() }
+        
         let psInfo = IOPSCopyPowerSourcesInfo().takeRetainedValue()
         let psList = IOPSCopyPowerSourcesList(psInfo).takeRetainedValue() as [CFTypeRef]
         
@@ -83,12 +100,16 @@ internal class UsageReader: Reader<Battery_Usage> {
             )
         }
         
-        self.usage.powerSource = list[kIOPSPowerSourceStateKey] as? String ?? "AC Power"
+        let powerSource = list[kIOPSPowerSourceStateKey] as? String
+        let isCharging = self.getBoolValue("IsCharging" as CFString)
+        let level = list[kIOPSCurrentCapacityKey] as? Int
+        
+        self.usage.powerSource = powerSource ?? "AC Power"
         self.usage.isBatteryPowered = self.usage.powerSource == "Battery Power"
         self.usage.isCharged = list[kIOPSIsChargedKey] as? Bool ?? false
-        self.usage.isCharging = self.getBoolValue("IsCharging" as CFString) ?? false
+        self.usage.isCharging = isCharging ?? false
         self.usage.optimizedChargingEngaged = list["Optimized Battery Charging Engaged"] as? Int == 1
-        self.usage.level = Double(list[kIOPSCurrentCapacityKey] as? Int ?? 0) / 100
+        self.usage.level = Double(level ?? 0) / 100
         
         self.usage.timeToEmpty = list[kIOPSTimeToEmptyKey] as? Int ?? 0
         self.usage.timeToCharge = list[kIOPSTimeToFullChargeKey] as? Int ?? 0
@@ -97,7 +118,8 @@ internal class UsageReader: Reader<Battery_Usage> {
             self.usage.timeOnACPower = Date()
         }
         
-        self.usage.cycles = self.getIntValue("CycleCount" as CFString) ?? 0
+        let cycles = self.getIntValue("CycleCount" as CFString)
+        self.usage.cycles = cycles ?? 0
         
         let batteryData = self.getDictValue("BatteryData" as CFString)
         
@@ -121,6 +143,10 @@ internal class UsageReader: Reader<Battery_Usage> {
         if self.usage.health > 100 {
             self.usage.health = 100
         }
+        self.usage.available = list[kIOPSTypeKey] as? String == kIOPSInternalBatteryType &&
+            (0...100).contains(level ?? -1) &&
+            (powerSource == "AC Power" || powerSource == "Battery Power") &&
+            isCharging != nil && (cycles ?? -1) >= 0
         
         self.usage.current = self.getIntValue("Amperage" as CFString) ?? 0
         self.usage.voltage = self.getVoltage() ?? 0

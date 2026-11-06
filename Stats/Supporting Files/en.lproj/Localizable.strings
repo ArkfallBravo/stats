@@ -146,6 +146,7 @@
 "No notifications available in this module" = "No notifications available in this module";
 "Open Calendar" = "Open Calendar";
 "Toggle the module" = "Toggle the module";
+"Preview is unavailable while module is disabled." = "Preview is unavailable while module is disabled.";
 "Open System Stats" = "Open System Stats";
 "Close module settings" = "Close module settings";
 
@@ -236,6 +237,7 @@
 "Constant color" = "Constant";
 "Custom..." = "Custom...";
 "Icon widget" = "Icon widget";
+"Animate icon" = "Animate icon";
 
 // Module Kit
 "Open module settings" = "Open module settings";
@@ -559,6 +561,7 @@
 "Identificator" = "Identificator";
 "Plan" = "Plan";
 "Monitoring" = "Monitoring";
+"Modules" = "Modules";
 "Control" = "Control";
 "Update" = "Update";
 "Sign in" = "Sign in";

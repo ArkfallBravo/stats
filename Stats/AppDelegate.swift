@@ -104,7 +104,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     
     func applicationWillTerminate(_ aNotification: Notification) {
         modules.forEach{ $0.terminate() }
+        DB.shared.flush()
         SystemStats.shared.terminate()
+    }
+    
+    func applicationDidUpdate(_ notification: Notification) {
+        self.updateDockIcon()
+    }
+    
+    internal func updateDockIcon() {
+        let showDockIcon = Store.shared.bool(key: "dockIcon", defaultValue: false) && NSApp.windows.contains {
+            $0.isMiniaturized || ($0.isVisible && $0.canBecomeMain)
+        }
+        let policy: NSApplication.ActivationPolicy = showDockIcon ? .regular : .accessory
+        if NSApp.activationPolicy() != policy {
+            NSApp.setActivationPolicy(policy)
+        }
     }
     
     deinit {

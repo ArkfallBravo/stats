@@ -146,6 +146,7 @@
 "No notifications available in this module" = "No hi ha notificacions disponibles en aquest mòdul"; // gemma4:31b
 "Open Calendar" = "Obrir el calendari"; // gemma4:31b
 "Toggle the module" = "Alternar el mòdul"; // gemma4:31b
+"Preview is unavailable while module is disabled." = "La previsualització no està disponible mentre el mòdul està desactivat.";
 "Open System Stats" = "Obrir System Stats"; // gemma4:31b
 "Close module settings" = "Tancar la configuració del mòdul"; // qwen3.8:27b
 
@@ -236,6 +237,7 @@
 "Constant color" = "Color constant";
 "Custom..." = "Personalitzat...";
 "Icon widget" = "Widget d'icona";
+"Animate icon" = "Anima la icona";
 
 // Module Kit
 "Open module settings" = "Obre la configuració del mòdul";
@@ -555,6 +557,7 @@
 "Identificator" = "Identificador"; // qwen3.8:27b
 "Plan" = "Pla"; // qwen3.8:27b
 "Monitoring" = "Monitorització"; // qwen3.8:27b
+"Modules" = "Mòduls";
 "Control" = "Control";
 "Update" = "Actualitzar"; // qwen3.8:27b
 "Sign in" = "Inicia sessió"; // qwen3.8:27b

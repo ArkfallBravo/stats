@@ -88,8 +88,8 @@ public enum widget_t: String {
             preview = CompressionRatioWidget(title: module, config: widgetConfig, preview: true)
             item = CompressionRatioWidget(title: module, config: widgetConfig, preview: false)
         case .icon:
-            preview = IconWidget(title: module, icon: icon, preview: true)
-            item = IconWidget(title: module, icon: icon, preview: false)
+            preview = IconWidget(title: module, config: widgetConfig, icon: icon, preview: true)
+            item = IconWidget(title: module, config: widgetConfig, icon: icon, preview: false)
             image = icon?.withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)) ?? icon
         default: break
         }

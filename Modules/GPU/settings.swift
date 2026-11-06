@@ -38,14 +38,14 @@ internal class Settings: NSStackView, Settings_v {
     private var numberOfProcesses: Int = 8
     private var selectedGPU: String
     private var showTypeValue: Bool = false
-
+    
     private let title: String
-
+    
     public var selectedGPUHandler: (String) -> Void = {_ in }
     public var callback: (() -> Void) = {}
+    public var callbackWhenUpdateNumberOfProcesses: (() -> Void) = {}
     public var setInterval: ((_ value: Int) -> Void) = {_ in }
     public var setTopInterval: ((_ value: Int) -> Void) = {_ in }
-    public var callbackWhenUpdateNumberOfProcesses: (() -> Void) = {}
     
     private var button: NSPopUpButton?
     
@@ -72,7 +72,7 @@ internal class Settings: NSStackView, Settings_v {
     public func load(widgets: [widget_t]) {
         self.subviews.forEach{ $0.removeFromSuperview() }
         
-        var intervalRows: [PreferencesRow] = [
+        var rows: [PreferencesRow] = [
             PreferencesRow(localizedString("Update interval"), component: selectView(
                 action: #selector(self.changeUpdateInterval),
                 items: ReaderUpdateIntervals,
@@ -80,14 +80,14 @@ internal class Settings: NSStackView, Settings_v {
             ))
         ]
         #if arch(arm64)
-        intervalRows.append(PreferencesRow(localizedString("Update interval for top processes"), component: selectView(
+        rows.append(PreferencesRow(localizedString("Update interval for top processes"), component: selectView(
             action: #selector(self.changeUpdateTopInterval),
             items: ReaderUpdateIntervals,
             selected: "\(self.updateTopIntervalValue)"
         )))
         #endif
-        self.addArrangedSubview(PreferencesSection(intervalRows))
-
+        self.addArrangedSubview(PreferencesSection(rows))
+        
         #if arch(arm64)
         self.addArrangedSubview(PreferencesSection([
             PreferencesRow(localizedString("Number of top processes"), component: selectView(
@@ -97,7 +97,7 @@ internal class Settings: NSStackView, Settings_v {
             ))
         ]))
         #endif
-
+        
         #if arch(x86_64)
         if !widgets.filter({ $0 == .mini }).isEmpty {
             self.addArrangedSubview(PreferencesSection([
@@ -156,7 +156,12 @@ internal class Settings: NSStackView, Settings_v {
         Store.shared.set(key: "\(self.title)_updateInterval", value: value)
         self.setInterval(value)
     }
-    #if arch(arm64)
+    @objc private func handleSelection(_ sender: NSMenuItem) {
+        guard let key = sender.representedObject as? String else { return }
+        self.selectedGPU = key
+        Store.shared.set(key: "\(self.title)_gpu", value: key)
+        self.selectedGPUHandler(key)
+    }
     @objc private func changeUpdateTopInterval(_ sender: NSMenuItem) {
         guard let key = sender.representedObject as? String, let value = Int(key) else { return }
         self.updateTopIntervalValue = value
@@ -164,17 +169,10 @@ internal class Settings: NSStackView, Settings_v {
         self.setTopInterval(value)
     }
     @objc private func changeNumberOfProcesses(_ sender: NSMenuItem) {
-        guard let value = Int(sender.title) else { return }
+        guard let key = sender.representedObject as? String, let value = Int(key) else { return }
         self.numberOfProcesses = value
         Store.shared.set(key: "\(self.title)_processes", value: value)
         self.callbackWhenUpdateNumberOfProcesses()
-    }
-    #endif
-    @objc private func handleSelection(_ sender: NSMenuItem) {
-        guard let key = sender.representedObject as? String else { return }
-        self.selectedGPU = key
-        Store.shared.set(key: "\(self.title)_gpu", value: key)
-        self.selectedGPUHandler(key)
     }
     @objc private func toggleShowType(_ sender: NSControl) {
         self.showTypeValue = controlState(sender)

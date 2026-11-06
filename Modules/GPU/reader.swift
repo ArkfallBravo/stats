@@ -181,6 +181,10 @@ internal class InfoReader: Reader<GPUs> {
                 type = .unknown
             }
             
+            if type == .discrete, (accelerator["Removable"] as? NSNumber)?.boolValue == true {
+                type = .external
+            }
+
             if model == "" {
                 model = predictModel
             }
@@ -377,176 +381,169 @@ internal class InfoReader: Reader<GPUs> {
     }
 }
 
-// MARK: - Top processes
-
-public struct GPUProcessUsage {
-    public let pid: Int
-    public let name: String
-    public let gpuTime: Double
-
-    public init(pid: Int, name: String, gpuTime: Double) {
-        self.pid = pid
-        self.name = name
-        self.gpuTime = gpuTime
-    }
-}
-
-// Ranks processes by GPU time, read from the accelerator's Metal user clients.
 public class ProcessReader: Reader<[TopProcess]> {
+    internal struct Client {
+        let pid: Int
+        let name: String
+        let gpuTime: UInt64
+        let queues: Int
+    }
+    
+    internal struct Usage {
+        private var clients: [UInt64: Client] = [:]
+        private(set) var timestamp: UInt64? = nil
+        
+        mutating func sample(_ clients: [UInt64: Client], at timestamp: UInt64, interval: Double) -> [TopProcess]? {
+            guard let previousTimestamp = self.timestamp, timestamp > previousTimestamp,
+                  Double(timestamp - previousTimestamp) / 1e9 <= max(interval, 1) * 3 else {
+                self.clients = clients
+                self.timestamp = timestamp
+                return nil
+            }
+            let elapsed = timestamp - previousTimestamp
+            guard elapsed >= 250_000_000 else { return nil }
+            defer {
+                self.clients = clients
+                self.timestamp = timestamp
+            }
+            
+            var processes: [Int: TopProcess] = [:]
+            for (id, client) in clients {
+                // Client and queue count changes or reset counters need a fresh baseline.
+                guard let previous = self.clients[id], previous.pid == client.pid,
+                      previous.queues == client.queues, client.gpuTime >= previous.gpuTime else { continue }
+                let usage = Double(client.gpuTime - previous.gpuTime) / Double(elapsed) * 100
+                if processes[client.pid] == nil {
+                    processes[client.pid] = TopProcess(pid: client.pid, name: client.name, usage: 0)
+                }
+                processes[client.pid]?.usage += usage
+            }
+            
+            return processes.values.sorted {
+                $0.usage != $1.usage ? $0.usage > $1.usage : $0.pid < $1.pid
+            }
+        }
+    }
+    
     private let title: String = "GPU"
-
-    private var previousSample: [Int: Double] = [:]
-    private var previousDate: Date? = nil
-
+    private let readLock = NSLock()
+    private var usage = Usage()
+    
     private var numberOfProcesses: Int {
         Store.shared.int(key: "\(self.title)_processes", defaultValue: 8)
     }
-
+    
     public override func setup() {
         self.popup = true
+        self.preview = true
         self.setInterval(Store.shared.int(key: "\(self.title)_updateTopInterval", defaultValue: 1))
     }
-
+    
+    public override func start() {
+        let active = self.active
+        super.start()
+        if !active && self.active {
+            DispatchQueue.global(qos: .background).async { [weak self] in
+                self?.read()
+            }
+        }
+    }
+    
+    public override func pause() {
+        super.pause()
+        self.reset()
+    }
+    
+    public override func stop() {
+        super.stop()
+        self.reset()
+    }
+    
+    private func reset() {
+        self.readLock.lock()
+        defer { self.readLock.unlock() }
+        self.usage = Usage()
+    }
+    
     public override func read() {
-        guard self.numberOfProcesses != 0 else {
+        self.readLock.lock()
+        defer { self.readLock.unlock() }
+        guard self.active else { return }
+        
+        let limit = self.numberOfProcesses
+        guard limit > 0 else {
+            self.usage = Usage()
+            self.callback([])
             return
         }
-
-        let now = Date()
-        let aggregated = ProcessReader.aggregate(self.sampleClients())
-        let currentSample = aggregated.mapValues { $0.gpuTime }
-
-        defer {
-            self.previousSample = currentSample
-            self.previousDate = now
-        }
-
-        guard let previousDate = self.previousDate else {
+        guard let clients = Self.readClients() else { return }
+        let previousTimestamp = self.usage.timestamp
+        guard let processes = self.usage.sample(clients, at: DispatchTime.now().uptimeNanoseconds, interval: self.interval ?? 1) else {
+            if self.usage.timestamp != previousTimestamp {
+                DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                    self?.read()
+                }
+            }
             return
         }
-
-        let usage = ProcessReader.usages(
-            current: currentSample,
-            previous: self.previousSample,
-            elapsed: now.timeIntervalSince(previousDate)
-        )
-        let processes = usage.filter { $0.value > 0 }
-            .sorted { $0.value > $1.value }
-            .prefix(self.numberOfProcesses)
-            .map
-            { (pid, value) in
-                TopProcess(pid: pid, name: self.resolveName(pid: pid, fallback: aggregated[pid]?.name ?? ""), usage: value)
+        
+        self.callback(processes.prefix(limit).map { process in
+            var process = process
+            if let app = NSRunningApplication(processIdentifier: pid_t(process.pid)), let name = app.localizedName {
+                process.name = name
+            } else {
+                var buffer = [UInt8](repeating: 0, count: 4096)
+                let length = proc_pidpath(pid_t(process.pid), &buffer, UInt32(buffer.count))
+                if length > 0, let path = String(bytes: buffer.prefix(Int(length)), encoding: .utf8) {
+                    process.name = URL(fileURLWithPath: path).lastPathComponent
+                }
             }
-
-        self.callback(processes)
+            return process
+        })
     }
-
-    // Sums GPU time per pid across a process's Metal user clients.
-    public static func aggregate(_ clients: [GPUProcessUsage]) -> [Int: (name: String, gpuTime: Double)] {
-        var result: [Int: (name: String, gpuTime: Double)] = [:]
-        for client in clients {
-            let existingName = result[client.pid]?.name ?? ""
-            let name = existingName.isEmpty ? client.name : existingName
-            result[client.pid] = (name, (result[client.pid]?.gpuTime ?? 0) + client.gpuTime)
-        }
-        return result
-    }
-
-    // Converts cumulative GPU-time samples (nanoseconds) into usage percentages over the interval.
-    public static func usages(current: [Int: Double], previous: [Int: Double], elapsed: TimeInterval) -> [Int: Double] {
-        guard elapsed > 0 else {
-            return [:]
-        }
-
-        let window = elapsed * 1_000_000_000
-        var result: [Int: Double] = [:]
-        for (pid, value) in current {
-            guard let start = previous[pid], value >= start else {
-                continue
-            }
-            result[pid] = min(100, max(0, (value - start) / window * 100)).rounded(toPlaces: 1)
-        }
-        return result
-    }
-
-    // Parses an "IOUserClientCreator" string such as "pid 630, WindowServer".
-    public static func parseCreator(_ raw: String) -> (pid: Int, name: String)? {
-        guard raw.hasPrefix("pid ") else {
-            return nil
-        }
-
-        let parts = raw.dropFirst(4).split(separator: ",", maxSplits: 1)
-        guard let first = parts.first, let pid = Int(first.trimmingCharacters(in: .whitespaces)) else {
-            return nil
-        }
-
-        let name = parts.count > 1 ? parts[1].trimmingCharacters(in: .whitespaces) : ""
-        return (pid, name)
-    }
-
-    private func resolveName(pid: Int, fallback: String) -> String {
-        if let app = NSRunningApplication(processIdentifier: pid_t(pid)), let name = app.localizedName {
-            return name
-        }
-
-        var buffer = [CChar](repeating: 0, count: 256)
-        if proc_name(Int32(pid), &buffer, UInt32(buffer.count)) > 0 {
-            let name = String(cString: buffer)
-            if !name.isEmpty {
-                return name
-            }
-        }
-
-        return fallback
-    }
-
-    private func sampleClients() -> [GPUProcessUsage] {
-        var iterator = io_iterator_t()
-        guard IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching(kIOAcceleratorClassName), &iterator) == kIOReturnSuccess else {
-            return []
-        }
+    
+    internal static func readClients() -> [UInt64: Client]? {
+        var iterator: io_iterator_t = io_iterator_t()
+        guard IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching(kIOAcceleratorClassName), &iterator) == kIOReturnSuccess else { return nil }
         defer { IOObjectRelease(iterator) }
-
-        var clients: [GPUProcessUsage] = []
+        
+        var clients: [UInt64: Client] = [:]
         var accelerator = IOIteratorNext(iterator)
         while accelerator != 0 {
-            clients.append(contentsOf: self.metalClients(of: accelerator))
-            IOObjectRelease(accelerator)
+            let service = accelerator
+            defer { IOObjectRelease(service) }
+            var children: io_iterator_t = io_iterator_t()
+            guard IORegistryEntryGetChildIterator(accelerator, kIOServicePlane, &children) == kIOReturnSuccess else { return nil }
+            defer { IOObjectRelease(children) }
+            
+            var child = IOIteratorNext(children)
+            while child != 0 {
+                var properties: Unmanaged<CFMutableDictionary>?
+                var id: UInt64 = 0
+                if IORegistryEntryGetRegistryEntryID(child, &id) == kIOReturnSuccess,
+                   IORegistryEntryCreateCFProperties(child, &properties, kCFAllocatorDefault, 0) == kIOReturnSuccess,
+                   let properties = properties?.takeRetainedValue() as? [String: Any], let client = Self.parseClient(properties) {
+                    clients[id] = client
+                }
+                IOObjectRelease(child)
+                child = IOIteratorNext(children)
+            }
+            guard IOIteratorIsValid(children) != 0 else { return nil }
             accelerator = IOIteratorNext(iterator)
         }
+        guard IOIteratorIsValid(iterator) != 0 else { return nil }
         return clients
     }
-
-    private func metalClients(of accelerator: io_registry_entry_t) -> [GPUProcessUsage] {
-        var iterator = io_iterator_t()
-        guard IORegistryEntryGetChildIterator(accelerator, kIOServicePlane, &iterator) == kIOReturnSuccess else {
-            return []
-        }
-        defer { IOObjectRelease(iterator) }
-
-        var clients: [GPUProcessUsage] = []
-        var child = IOIteratorNext(iterator)
-        while child != 0 {
-            if let usage = self.clientUsage(child) {
-                clients.append(usage)
-            }
-            IOObjectRelease(child)
-            child = IOIteratorNext(iterator)
-        }
-        return clients
-    }
-
-    private func clientUsage(_ entry: io_registry_entry_t) -> GPUProcessUsage? {
-        guard let props = getIOProperties(entry) as? [String: Any],
-              let creator = props["IOUserClientCreator"] as? String,
-              let parsed = ProcessReader.parseCreator(creator) else {
-            return nil
-        }
-
-        let appUsage = props["AppUsage"] as? [[String: Any]] ?? []
-        let gpuTime = appUsage.reduce(0.0) { sum, usage in
-            sum + ((usage["accumulatedGPUTime"] as? NSNumber)?.doubleValue ?? 0)
-        }
-        return GPUProcessUsage(pid: parsed.pid, name: parsed.name, gpuTime: gpuTime)
+    
+    internal static func parseClient(_ properties: [String: Any]) -> Client? {
+        guard let creator = properties["IOUserClientCreator"] as? String, creator.hasPrefix("pid "),
+              let queues = properties["AppUsage"] as? [[String: Any]] else { return nil }
+        let parts = creator.dropFirst(4).split(separator: ",", maxSplits: 1)
+        guard let first = parts.first, let pid = Int(first.trimmingCharacters(in: .whitespaces)), pid > 0 else { return nil }
+        let times = queues.compactMap { ($0["accumulatedGPUTime"] as? NSNumber)?.uint64Value }
+        guard !times.isEmpty else { return nil }
+        
+        let name = parts.count > 1 ? parts[1].trimmingCharacters(in: .whitespaces) : "\(pid)"
+        return Client(pid: pid, name: name, gpuTime: times.reduce(0, +), queues: times.count)
     }
 }

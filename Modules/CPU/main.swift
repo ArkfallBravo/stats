@@ -20,13 +20,13 @@ public struct CPU_Load: Codable, RemoteType {
     var userLoad: Double = 0
     var idleLoad: Double = 0
     
-    public func remote() -> Data? {
-        var string = "1,1,\(self.totalUsage),\(self.usagePerCore.count),"
+    public func remote() -> String? {
+        var string = "1,1,\((self.totalUsage * 10000).rounded() / 10000),\(self.usagePerCore.count)"
         for c in self.usagePerCore {
-            string += "\(c),"
+            string += ",\((c * 10000).rounded() / 10000)"
         }
         string += "$"
-        return string.data(using: .utf8)
+        return string
     }
 }
 
@@ -48,9 +48,9 @@ public struct CPU_AverageLoad: Codable, RemoteType {
     var load5: Double = 0
     var load15: Double = 0
     
-    public func remote() -> Data? {
+    public func remote() -> String? {
         let string = "1,1,\(self.load1),\(self.load5),\(self.load15)$"
-        return string.data(using: .utf8)
+        return string
     }
 }
 
@@ -145,6 +145,7 @@ public class CPU: Module {
         }
         self.processReader = ProcessReader(.CPU) { [weak self] value in
             self?.popupView.processCallback(value)
+            self?.previewView.processCallback(value)
         }
         self.averageLoadReader = AverageLoadReader(.CPU, popup: true) { [weak self] value in
             self?.popupView.averageCallback(value)
@@ -171,6 +172,7 @@ public class CPU: Module {
         self.settingsView.callbackWhenUpdateNumberOfProcesses = { [weak self] in
             guard let self else { return }
             self.popupView.numberOfProcessesUpdated()
+            self.previewView.numberOfProcessesUpdated()
             DispatchQueue.global(qos: .background).async { [weak self] in
                 self?.processReader?.read()
             }

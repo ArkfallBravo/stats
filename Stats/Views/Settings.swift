@@ -194,11 +194,9 @@ class SettingsWindow: NSWindow, NSWindowDelegate, NSToolbarDelegate {
     internal func open(module: String? = nil) {
         if !self.isVisible {
             self.setIsVisible(true)
-            self.makeKeyAndOrderFront(nil)
         }
-        if !self.isKeyWindow {
-            self.orderFrontRegardless()
-        }
+        NSApp.activate(ignoringOtherApps: true)
+        self.makeKeyAndOrderFront(nil)
         
         if var name = module {
             if name == "Combined modules" { name = "Dashboard" }
@@ -445,7 +443,7 @@ private class SidebarView: NSStackView {
         view.edgeInsets = NSEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
         view.orientation = .horizontal
         
-        let systemStats = SupportButtonView(name: "System Stats", image: "AppIcon", action: {
+        let systemStats = SupportButtonView(name: "System Stats", image: "Stats", action: {
             NSWorkspace.shared.open(URL(string: "https://www.system-stats.com")!)
         })
         let github = SupportButtonView(name: "GitHub Sponsors", image: "github", action: {
@@ -476,7 +474,7 @@ private class SidebarView: NSStackView {
     }
     
     @objc private func reportBug() {
-        NSWorkspace.shared.open(URL(string: "https://github.com/exelban/stats/issues/new?template=bug_report.md")!)
+        NSWorkspace.shared.open(URL(string: "https://github.com/exelban/stats/issues/new?template=bug_report.yml")!)
     }
     
     @objc private func donate(_ sender: NSButton) {
