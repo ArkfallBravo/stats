@@ -60,7 +60,8 @@ git checkout my-changes && git merge master     # resolve conflicts if any
 git push origin my-changes
 ```
 
-The repo lives in iCloud Drive, so git commands occasionally fail transiently with
+The repo lives in iCloud Drive on purpose, so uncommitted work survives a dead machine;
+don't move it out or rename it `.nosync`. As a result, git commands occasionally fail transiently with
 odd errors (e.g. `fatal: stash failed`) while iCloud is syncing the working tree —
 retrying the same command generally succeeds, and it leaves no partial state behind.
 
