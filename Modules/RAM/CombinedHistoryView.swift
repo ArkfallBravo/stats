@@ -53,6 +53,15 @@ internal class CombinedHistoryView: NSView
 {
     private let history: HistoryRing<CombinedSample>
 
+    // Colors picked in settings, drawn in place of the OKHSL defaults.
+    var colorOverrides: [HistoryRole: NSColor] = [:]
+    {
+        didSet
+        {
+            self.redrawIfVisible()
+        }
+    }
+
     init(frame: NSRect, num: Int)
     {
         self.history = HistoryRing(capacity: num)
@@ -88,8 +97,8 @@ internal class CombinedHistoryView: NSView
         }
 
         let series = CombinedSeries(samples: samples, geometry: HistoryGeometry(frame: self.frame, count: samples.count))
-        let palette = HistoryPalette()
-        self.stroke(HistoryRuns.polylines(series.points(\.usage)), color: palette.usage)
+        let palette = HistoryPalette(self.colorOverrides)
+        self.stroke(HistoryRuns.polylines(series.points(\.usage)), color: palette.color(.usage))
         self.strokeSolid(HistoryRuns.levelPolylines(series.levelPoints(\.pressure)), palette: palette)
         self.strokeDashed(HistoryRuns.levelPolylines(series.levelPoints(\.compression)), palette: palette)
     }

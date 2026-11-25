@@ -217,6 +217,12 @@ public struct SColor: KeyValue_p, Equatable {
     public var isCustom: Bool {
         return self.key.hasPrefix(SColor.customPrefix)
     }
+
+    // Returns a color entry outside the built-in list, e.g. a module's own default.
+    public static func named(key: String, value: String, color: NSColor) -> SColor
+    {
+        return SColor(key: key, value: value, additional: color)
+    }
 }
 
 extension SColor: CaseIterable {

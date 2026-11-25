@@ -24,6 +24,15 @@ internal class PressureHistoryView: NSView
 
     private let history: HistoryRing<Point>
 
+    // Colors picked in settings, drawn in place of the OKHSL defaults.
+    var colorOverrides: [HistoryRole: NSColor] = [:]
+    {
+        didSet
+        {
+            self.redrawIfVisible()
+        }
+    }
+
     init(frame: NSRect, num: Int)
     {
         self.history = HistoryRing(capacity: num)
@@ -67,7 +76,7 @@ internal class PressureHistoryView: NSView
             return
         }
         let geometry = HistoryGeometry(frame: self.frame, count: ordered.count)
-        let palette = HistoryPalette()
+        let palette = HistoryPalette(self.colorOverrides)
 
         // --- filled colored trapezoids between consecutive non-nil points ---
         for i in 0..<(ordered.count - 1)

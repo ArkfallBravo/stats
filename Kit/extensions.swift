@@ -474,6 +474,7 @@ private class SColorSelectView: NSStackView {
     
     private weak var callbackTarget: NSObject?
     private let callbackAction: Selector
+    private let items: [SColor]
     private let select: NSPopUpButton = NSPopUpButton(frame: NSRect(x: 0, y: 4, width: 50, height: 28))
     private let colorWell: NSColorWell = NSColorWell(frame: NSRect(x: 0, y: 0, width: 28, height: 24))
     private var customItem: NSMenuItem?
@@ -481,10 +482,11 @@ private class SColorSelectView: NSStackView {
     init(target: NSObject, action: Selector, items: [SColor], selected: String) {
         self.callbackTarget = target
         self.callbackAction = action
+        self.items = items
         
         super.init(frame: .zero)
         
-        let selectedColor = SColor.fromString(selected)
+        let selectedColor = self.color(forKey: selected)
         self.orientation = .horizontal
         self.alignment = .centerY
         self.spacing = 6
@@ -545,7 +547,7 @@ private class SColorSelectView: NSStackView {
             return
         }
         
-        let color = SColor.fromString(key)
+        let color = self.color(forKey: key)
         if let nsColor = color.additional as? NSColor {
             self.colorWell.color = nsColor
         }
@@ -557,6 +559,12 @@ private class SColorSelectView: NSStackView {
         self.updateMenuState(selectedKey: SColorSelectView.customKey)
         self.select.select(self.customItem)
         self.send(SColor.custom(sender.color).key)
+    }
+    
+    // Resolves a key against this menu's own items first, so entries outside the built-in list keep their color.
+    private func color(forKey key: String) -> SColor
+    {
+        return self.items.first(where: { $0.key == key }) ?? SColor.fromString(key)
     }
     
     private func updateMenuState(selectedKey: String) {

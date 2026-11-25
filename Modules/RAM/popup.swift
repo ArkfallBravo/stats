@@ -81,6 +81,7 @@ internal class Popup: PopupWrapper {
     private var freeColor: NSColor { self.freeColorState.additional as? NSColor ?? NSColor.systemBlue }
     private var chartColorState: SColor = .systemAccent
     private var chartColor: NSColor { self.chartColorState.additional as? NSColor ?? NSColor.systemBlue }
+    private var historyColorStates: [HistoryRole: SColor] = [:]
     
     public init(_ module: ModuleType) {
         super.init(module, frame: NSRect(
@@ -96,6 +97,11 @@ internal class Popup: PopupWrapper {
         self.compressedColorState = SColor.fromString(Store.shared.string(key: "\(self.title)_compressedColor", defaultValue: self.compressedColorState.key))
         self.freeColorState = SColor.fromString(Store.shared.string(key: "\(self.title)_freeColor", defaultValue: self.freeColorState.key))
         self.chartColorState = SColor.fromString(Store.shared.string(key: "\(self.title)_chartColor", defaultValue: self.chartColorState.key))
+        for role in HistoryRole.allCases
+        {
+            let stored = Store.shared.string(key: role.storeKey(self.title), defaultValue: role.defaultColor.key)
+            self.historyColorStates[role] = SColor.fromString(stored, defaultValue: role.defaultColor)
+        }
         self.lineChartHistory = Store.shared.int(key: "\(self.title)_lineChartHistory", defaultValue: self.lineChartHistory)
         self.lineChartScale = Scale.fromString(Store.shared.string(key: "\(self.title)_lineChartScale", defaultValue: self.lineChartScale.key))
         self.lineChartFixedScale = Double(Store.shared.int(key: "\(self.title)_lineChartFixedScale", defaultValue: 100)) / 100
@@ -243,6 +249,7 @@ internal class Popup: PopupWrapper {
 
         self.combinedChart = CombinedHistoryView(frame: chartFrame, num: self.lineChartHistory)
         container.addSubview(self.combinedChart!)
+        self.applyHistoryColors()
         self.showSelectedChart()
         
         view.addSubview(separator)
@@ -422,7 +429,8 @@ internal class Popup: PopupWrapper {
                 action: #selector(self.toggleChartColor),
                 items: SColor.allColors,
                 selected: self.chartColorState.key
-            )),
+            ))
+        ] + HistoryRole.allCases.map(self.historyColorRow) + [
             PreferencesRow(localizedString("Chart history"), component: selectView(
                 action: #selector(self.toggleLineChartHistory),
                 items: LineChartHistory,
@@ -509,6 +517,66 @@ internal class Popup: PopupWrapper {
         let separator = separatorView(self.chartSeparatorTitle(), origin: old.frame.origin, width: old.frame.width)
         old.superview?.replaceSubview(old, with: separator)
         self.chartSeparator = separator
+    }
+
+    // Returns the settings row with the color dropdown for one history chart color.
+    private func historyColorRow(_ role: HistoryRole) -> PreferencesRow
+    {
+        return PreferencesRow(role.title, component: colorSelectView(
+            action: self.historyColorAction(role),
+            items: role.menuItems,
+            selected: self.historyColorStates[role]?.key ?? role.defaultColor.key
+        ))
+    }
+
+    // Returns the dropdown action that stores one history chart color.
+    private func historyColorAction(_ role: HistoryRole) -> Selector
+    {
+        switch role
+        {
+        case .normal: return #selector(self.toggleNormalHistoryColor)
+        case .warning: return #selector(self.toggleWarningHistoryColor)
+        case .critical: return #selector(self.toggleCriticalHistoryColor)
+        case .usage: return #selector(self.toggleUsageHistoryColor)
+        }
+    }
+
+    @objc private func toggleNormalHistoryColor(_ sender: NSMenuItem)
+    {
+        self.setHistoryColor(.normal, from: sender)
+    }
+    @objc private func toggleWarningHistoryColor(_ sender: NSMenuItem)
+    {
+        self.setHistoryColor(.warning, from: sender)
+    }
+    @objc private func toggleCriticalHistoryColor(_ sender: NSMenuItem)
+    {
+        self.setHistoryColor(.critical, from: sender)
+    }
+    @objc private func toggleUsageHistoryColor(_ sender: NSMenuItem)
+    {
+        self.setHistoryColor(.usage, from: sender)
+    }
+
+    // Stores the color picked for a history chart role and redraws the history charts.
+    private func setHistoryColor(_ role: HistoryRole, from sender: NSMenuItem)
+    {
+        guard let key = sender.representedObject as? String else
+        {
+            return
+        }
+        let pick = SColor.fromString(key, defaultValue: role.defaultColor)
+        self.historyColorStates[role] = pick
+        Store.shared.set(key: role.storeKey(self.title), value: pick.key)
+        self.applyHistoryColors()
+    }
+
+    // Pushes the picked history colors into the history charts.
+    private func applyHistoryColors()
+    {
+        let overrides = self.historyColorStates.compactMapValues(historyOverride)
+        self.levelChart?.colorOverrides = overrides
+        self.combinedChart?.colorOverrides = overrides
     }
 
     @objc private func toggleChartColor(_ sender: NSMenuItem) {
