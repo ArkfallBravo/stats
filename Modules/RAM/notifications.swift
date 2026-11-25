@@ -61,7 +61,7 @@ class Notifications: NotificationsWrapper {
         }
         if Store.shared.exist(key: "\(self.module)_notifications_pressure") {
             let value = Store.shared.string(key: "\(self.module)_notifications_pressure", defaultValue: "")
-            if value != "" {
+            if !value.isEmpty {
                 Store.shared.set(key: "\(self.module)_notifications_pressure_state", value: true)
                 Store.shared.set(key: "\(self.module)_notifications_pressure_value", value: value)
                 Store.shared.remove("\(self.module)_notifications_pressure")
@@ -69,7 +69,7 @@ class Notifications: NotificationsWrapper {
         }
         if Store.shared.exist(key: "\(self.module)_notifications_swap") {
             let value = Store.shared.string(key: "\(self.module)_notifications_swap", defaultValue: "")
-            if value != ""  {
+            if !value.isEmpty {
                 Store.shared.set(key: "\(self.module)_notifications_swap_state", value: true)
                 Store.shared.remove("\(self.module)_notifications_swap")
             }
@@ -101,7 +101,7 @@ class Notifications: NotificationsWrapper {
         self.addArrangedSubview(PreferencesSection([
             PreferencesRow(localizedString("Memory pressure"), component: PreferencesSwitch(
                 action: self.togglePressure, state: self.pressureState,
-                with: selectView(action: #selector(self.changePressure), items: memoryPressureLevels, selected: self.pressure)
+                with: self.selectView(action: #selector(self.changePressure), items: memoryPressureLevels, selected: self.pressure)
             )),
             PreferencesRow(localizedString("Memory pressure percent"), component: PreferencesSwitch(
                 action: self.togglePressurePercent, state: self.pressurePercentState, with: StepperInput(self.pressurePercent, callback: self.changePressurePercent)
@@ -114,7 +114,7 @@ class Notifications: NotificationsWrapper {
         self.addArrangedSubview(PreferencesSection([
             PreferencesRow(localizedString("Swap size"), component: PreferencesSwitch(
                 action: self.toggleSwap, state: self.swapState, with: StepperInput(
-                    self.swap, range: NSRange(location: 1, length: 1023), unit: self.swapUnit.key, units: SizeUnit.allCases, 
+                    self.swap, range: NSRange(location: 1, length: 1023), unit: self.swapUnit.key, units: SizeUnit.allCases,
                     callback: self.changeSwap, unitCallback: self.changeSwapUnit
                 )
             ))
@@ -138,7 +138,7 @@ class Notifications: NotificationsWrapper {
             self.checkDouble(id: self.freeID, value: free, threshold: Double(self.free)/100, title: title, subtitle: subtitle, less: true)
         }
         
-        if self.pressureState, self.pressure != "", let thresholdPair = memoryPressureLevels.first(where: {$0.key == self.pressure}) {
+        if self.pressureState, !self.pressure.isEmpty, let thresholdPair = memoryPressureLevels.first(where: {$0.key == self.pressure}) {
             if let threshold = thresholdPair.additional as? DispatchSource.MemoryPressureEvent {
                 self.checkDouble(
                     id: self.pressureID,
@@ -150,9 +150,10 @@ class Notifications: NotificationsWrapper {
             }
         }
         
-        if self.pressurePercentState {
-            let subtitle = localizedString("Memory pressure is", "\(value.pressurePercent)%")
-            self.checkDouble(id: self.pressurePercentID, value: Double(value.pressurePercent), threshold: Double(self.pressurePercent), title: title, subtitle: subtitle)
+        if self.pressurePercentState, let percentage = value.pressure.percentage
+        {
+            let subtitle = localizedString("Memory pressure is", "\(percentage)%")
+            self.checkDouble(id: self.pressurePercentID, value: Double(percentage), threshold: Double(self.pressurePercent), title: title, subtitle: subtitle)
         }
 
         if self.compressionPercentState

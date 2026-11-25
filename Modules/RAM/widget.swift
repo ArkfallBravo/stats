@@ -28,7 +28,7 @@ public struct RAM_entry: TimelineEntry {
             app: 16369778688.0,
             cache: 12575948800.0,
             swap: Swap(total: 0, used: 0, free: 0),
-            pressure: Pressure(level: 1, value: .normal),
+            pressure: Pressure(level: 1, value: .normal, percentage: nil),
             swapins: 14,
             swapouts: 16
         ),
@@ -62,7 +62,7 @@ public struct Provider: TimelineProvider {
     public func getTimeline(in context: Context, completion: @escaping (Timeline<RAM_entry>) -> Void) {
         self.userDefaults?.set(Date().timeIntervalSince1970, forKey: RAM_entry.kind)
         var entry = RAM_entry()
-        if let raw = userDefaults?.data(forKey: "RAM@UsageReader"), let load = try? JSONDecoder().decode(RAM_Usage.self, from: raw) {
+        if let raw = self.userDefaults?.data(forKey: "RAM@UsageReader"), let load = try? JSONDecoder().decode(RAM_Usage.self, from: raw) {
             entry.value = load
         }
         let entries: [RAM_entry] = [entry]

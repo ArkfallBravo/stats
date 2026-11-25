@@ -14,20 +14,20 @@ import Carbon
 
 internal final class RegexCache {
     static let shared = RegexCache()
-
+    
     private var cache: [String: NSRegularExpression] = [:]
     private let lock = NSLock()
-
+    
     func regex(_ pattern: String, options: NSRegularExpression.Options = []) -> NSRegularExpression? {
         let key = "\(options.rawValue):\(pattern)"
-
+        
         self.lock.lock()
         defer { self.lock.unlock() }
-
+        
         if let cached = self.cache[key] {
             return cached
         }
-
+        
         guard let regex = try? NSRegularExpression(pattern: pattern, options: options) else {
             return nil
         }
@@ -45,6 +45,10 @@ internal final class FormatterCache {
     private let lock = NSLock()
     
     func readableMemory(_ bytes: Int64, style: ByteCountFormatter.CountStyle) -> String {
+        if bytes == 0 {
+            return "0 KB"
+        }
+        
         self.lock.lock()
         defer { self.lock.unlock() }
         
@@ -166,7 +170,7 @@ extension String: @retroactive LocalizedError {
     public var errorDescription: String? { return self }
     
     public var digits: String {
-        return components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+        return self.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
     }
     
     public func widthOfString(usingFont font: NSFont) -> CGFloat {
@@ -185,7 +189,7 @@ extension String: @retroactive LocalizedError {
             return ("", self)
         }
         let range = NSRange(self.startIndex..., in: self)
-
+        
         if let match = regex.firstMatch(in: self, options: [], range: range) {
             if let range = Range(match.range, in: self) {
                 let cropped = String(self[range]).trimmingCharacters(in: .whitespaces)
@@ -194,21 +198,21 @@ extension String: @retroactive LocalizedError {
                 return (cropped, remaining.trimmingCharacters(in: .whitespaces))
             }
         }
-
+        
         return ("", self)
     }
-
+    
     public func find(pattern: String) -> String {
         guard let regex = RegexCache.shared.regex(pattern) else {
             return ""
         }
         let stringRange = NSRange(self.startIndex..., in: self)
-
+        
         if let searchRange = regex.firstMatch(in: self, options: [], range: stringRange),
            let matchRange = Range(searchRange.range, in: self) {
             return String(self[matchRange]).trimmingCharacters(in: .whitespaces)
         }
-
+        
         return ""
     }
     
@@ -242,7 +246,7 @@ extension String: @retroactive LocalizedError {
     }
     
     func removingWhitespaces() -> String {
-        return components(separatedBy: .whitespaces).joined()
+        return self.components(separatedBy: .whitespaces).joined()
     }
 }
 
@@ -363,7 +367,7 @@ public extension Double {
 
 public extension NSView {
     var isDarkMode: Bool {
-        switch effectiveAppearance.name {
+        switch self.effectiveAppearance.name {
         case .darkAqua, .vibrantDark, .accessibilityHighContrastDarkAqua, .accessibilityHighContrastVibrantDark:
             return true
         default:
@@ -614,7 +618,7 @@ public class TextView: NSTextField {
 
 public extension OperatingSystemVersion {
     func getFullVersion(separator: String = ".") -> String {
-        return "\(majorVersion)\(separator)\(minorVersion)\(separator)\(patchVersion)"
+        return "\(self.majorVersion)\(separator)\(self.minorVersion)\(separator)\(self.patchVersion)"
     }
 }
 
@@ -771,13 +775,13 @@ extension NSTextView {
 
 public extension Data {
     var socketAddress: sockaddr {
-        return withUnsafeBytes { $0.load(as: sockaddr.self) }
+        return self.withUnsafeBytes { $0.load(as: sockaddr.self) }
     }
 }
 
 public extension Date {
     func convertToTimeZone(_ timeZone: TimeZone) -> Date {
-        return addingTimeInterval(TimeInterval(timeZone.secondsFromGMT(for: self) - TimeZone.current.secondsFromGMT(for: self)))
+        return self.addingTimeInterval(TimeInterval(timeZone.secondsFromGMT(for: self) - TimeZone.current.secondsFromGMT(for: self)))
     }
     
     func currentTimeSeconds() -> Int {
@@ -831,6 +835,7 @@ extension CGFloat {
 
 public class KeyboardShartcutView: NSStackView {
     private let callback: (_ value: [UInt16]) -> Void
+    private let modifierKeys: [UInt16]?
     
     private var startIcon: NSImage { iconFromSymbol(name: "record.circle", scale: .large) }
     private var stopIcon: NSImage { iconFromSymbol(name: "stop.circle.fill", scale: .large) }
@@ -845,9 +850,10 @@ public class KeyboardShartcutView: NSStackView {
     private var interaction: Bool = false
     private var monitor: Any? = nil
     
-    public init(callback: @escaping (_ value: [UInt16]) -> Void, value: [UInt16]) {
+    public init(callback: @escaping (_ value: [UInt16]) -> Void, value: [UInt16], modifierKeys: [UInt16]? = nil) {
         self.callback = callback
         self.value = value
+        self.modifierKeys = modifierKeys
         
         super.init(frame: NSRect.zero)
         self.orientation = .horizontal
@@ -858,8 +864,8 @@ public class KeyboardShartcutView: NSStackView {
         valueField.textColor = .textColor
         valueField.alignment = .center
         
-        let startButton = buttonIconView(#selector(self.startListening), icon: self.startIcon, height: 15)
-        let stopButton = buttonIconView(#selector(self.stopListening), icon: self.stopIcon, height: 15)
+        let startButton = self.buttonIconView(#selector(self.startListening), icon: self.startIcon, height: 15)
+        let stopButton = self.buttonIconView(#selector(self.stopListening), icon: self.stopIcon, height: 15)
         
         self.addArrangedSubview(valueField)
         self.addArrangedSubview(startButton)
@@ -885,7 +891,9 @@ public class KeyboardShartcutView: NSStackView {
     }
     
     @objc private func startListening() {
-        guard AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary) else { return }
+        if self.modifierKeys == nil {
+            guard AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary) else { return }
+        }
         if let btn = self.stopButton {
             self.startButton?.removeFromSuperview()
             self.addArrangedSubview(btn)
@@ -913,20 +921,28 @@ public class KeyboardShartcutView: NSStackView {
     
     private func handleKeyEvent(_ event: NSEvent) {
         guard self.recording else { return }
+        if self.modifierKeys != nil && event.type != .flagsChanged { return }
         self.interaction = true
         
         if event.type == .flagsChanged {
+            let previousCount = self.keyCodes.count
             self.keyCodes = []
             if event.modifierFlags.contains(.control) { self.keyCodes.append(59) }
             if event.modifierFlags.contains(.shift) { self.keyCodes.append(60) }
             if event.modifierFlags.contains(.command) { self.keyCodes.append(55) }
             if event.modifierFlags.contains(.option) { self.keyCodes.append(58) }
+            if let modifierKeys = self.modifierKeys,
+               !self.keyCodes.isEmpty,
+               self.keyCodes.count >= previousCount,
+               self.keyCodes.allSatisfy({ modifierKeys.contains($0) }) {
+                self.value = self.keyCodes
+            }
         } else if event.type == .keyDown {
             self.keyCodes.append(event.keyCode)
             self.value = self.keyCodes
         }
         
-        let list = self.keyCodes.isEmpty ? self.value : self.keyCodes
+        let list = self.modifierKeys != nil || self.keyCodes.isEmpty ? self.value : self.keyCodes
         self.valueField?.stringValue = self.parseValue(list)
     }
     

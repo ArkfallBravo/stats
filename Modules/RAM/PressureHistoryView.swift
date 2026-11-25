@@ -11,31 +11,32 @@
 import Cocoa
 import Kit
 
+// One tick of the pressure-level chart, with the value in 0–1.
+internal struct PressureSample
+{
+    let value: Double
+    let level: Int     // 1 = normal, 2 = warning, 4 = critical
+}
+
 /// A line-chart view for a 0–1 history whose time-slices are colored by memory pressure level.
 /// Each time-slice is filled green (normal), yellow (warning), or red (critical),
 /// matching Activity Monitor's memory pressure graph.
 internal class PressureHistoryView: NSView
 {
-    private struct Point
-    {
-        let value: Double  // 0.0 – 1.0
-        let level: Int     // 1 = normal, 2 = warning, 4 = critical
-    }
-
-    private let history: HistoryRing<Point>
+    private let history: HistoryRing<PressureSample>
 
     // Colors picked in settings, drawn in place of the OKHSL defaults.
     var colorOverrides: [HistoryRole: NSColor] = [:]
     {
         didSet
         {
-            self.redrawIfVisible()
+            self.historyUpdated()
         }
     }
 
-    init(frame: NSRect, num: Int)
+    init(frame: NSRect, history: HistoryRing<PressureSample>)
     {
-        self.history = HistoryRing(capacity: num)
+        self.history = history
         super.init(frame: frame)
         self.wantsLayer = true
     }
@@ -45,19 +46,17 @@ internal class PressureHistoryView: NSView
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Public API
-
-    func addValue(value: Double, level: Int)
+    // Redraws the chart from its history, if the chart is on screen.
+    func historyUpdated()
     {
-        self.history.append(Point(value: value, level: level))
-        self.redrawIfVisible()
-    }
-
-    /// Resize the ring buffer to `num` slots (clears existing data).
-    func reinit(_ num: Int)
-    {
-        self.history.reset(capacity: num)
-        self.redrawIfVisible()
+        DispatchQueue.main.async
+        { [weak self] in
+            guard let self, self.window?.isVisible ?? false else
+            {
+                return
+            }
+            self.display()
+        }
     }
 
     // MARK: - Drawing
@@ -114,20 +113,6 @@ internal class PressureHistoryView: NSView
             }
             path.lineWidth = geometry.offset
             path.stroke()
-        }
-    }
-
-    // MARK: - Helpers
-
-    private func redrawIfVisible()
-    {
-        DispatchQueue.main.async
-        { [weak self] in
-            guard let self, self.window?.isVisible ?? false else
-            {
-                return
-            }
-            self.display()
         }
     }
 }

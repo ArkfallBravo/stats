@@ -106,7 +106,7 @@ public class SpeedWidget: WidgetWrapper {
         super.init(.speed, title: widgetTitle, frame: CGRect(
             x: 0,
             y: Constants.Widget.margin.y,
-            width: width,
+            width: self.width,
             height: Constants.Widget.height - (2*Constants.Widget.margin.y)
         ))
         self.canDrawConcurrently = true
@@ -241,7 +241,7 @@ public class SpeedWidget: WidgetWrapper {
     }
     
     private func drawValue(_ value: Int64, offset: CGPoint, color: NSColor) -> CGFloat {
-        let rowWidth: CGFloat = self.unitsState ? 58 : 32
+        var rowWidth: CGFloat = self.unitsState ? 58 : 32
         let height: CGFloat = self.frame.height
         let style = NSMutableParagraphStyle()
         style.alignment = self.valueAlignment
@@ -253,11 +253,14 @@ public class SpeedWidget: WidgetWrapper {
             NSAttributedString.Key.paragraphStyle: style
         ]
         
-        let rect = CGRect(x: offset.x, y: (height-size)/2 + offset.y + 1, width: rowWidth - (Constants.Widget.margin.x*2), height: size)
         let value = NSAttributedString.init(
-            string: Units(bytes: value).getReadableSpeed(base: base, unit: self.speedUnit, omitUnits: !self.unitsState),
+            string: Units(bytes: value).getReadableSpeed(base: self.base, unit: self.speedUnit, omitUnits: !self.unitsState),
             attributes: inputStringAttributes
         )
+        if self.speedUnit != NetworkSpeedUnitAuto {
+            rowWidth = max(rowWidth, value.size().width.rounded(.up) + (Constants.Widget.margin.x*2))
+        }
+        let rect = CGRect(x: offset.x, y: (height-size)/2 + offset.y + 1, width: rowWidth - (Constants.Widget.margin.x*2), height: size)
         value.draw(with: rect)
         
         return rowWidth
@@ -345,7 +348,7 @@ public class SpeedWidget: WidgetWrapper {
         }
         
         if self.valueState {
-            let rowWidth: CGFloat = self.unitsState ? 48 : 30
+            var rowWidth: CGFloat = self.unitsState ? 48 : 30
             let rowHeight: CGFloat = self.frame.height / 2
             let style = NSMutableParagraphStyle()
             style.alignment = self.valueAlignment
@@ -364,18 +367,22 @@ public class SpeedWidget: WidgetWrapper {
             let inputY: CGFloat = self.displayValueState == "io" ? rowHeight + 1 : 1
             let outputY: CGFloat = self.displayValueState == "io" ? 1 : rowHeight + 1
             
-            var rect = CGRect(x: Constants.Widget.margin.x + x, y: inputY, width: rowWidth - (Constants.Widget.margin.x*2), height: rowHeight)
             let input = NSAttributedString.init(
-                string: Units(bytes: self.inputValue).getReadableSpeed(base: base, unit: self.speedUnit, omitUnits: !self.unitsState),
+                string: Units(bytes: self.inputValue).getReadableSpeed(base: self.base, unit: self.speedUnit, omitUnits: !self.unitsState),
                 attributes: inputStringAttributes
             )
+            let output = NSAttributedString.init(
+                string: Units(bytes: self.outputValue).getReadableSpeed(base: self.base, unit: self.speedUnit, omitUnits: !self.unitsState),
+                attributes: outputStringAttributes
+            )
+            if self.speedUnit != NetworkSpeedUnitAuto {
+                rowWidth = max(rowWidth, max(input.size().width, output.size().width).rounded(.up) + (Constants.Widget.margin.x*2))
+            }
+            
+            var rect = CGRect(x: Constants.Widget.margin.x + x, y: inputY, width: rowWidth - (Constants.Widget.margin.x*2), height: rowHeight)
             input.draw(with: rect)
             
             rect = CGRect(x: Constants.Widget.margin.x + x, y: outputY, width: rowWidth - (Constants.Widget.margin.x*2), height: rowHeight)
-            let output = NSAttributedString.init(
-                string: Units(bytes: self.outputValue).getReadableSpeed(base: base, unit: self.speedUnit, omitUnits: !self.unitsState),
-                attributes: outputStringAttributes
-            )
             output.draw(with: rect)
             
             width += rowWidth
@@ -487,7 +494,7 @@ public class SpeedWidget: WidgetWrapper {
     public override func settings() -> NSView {
         let view = SettingsContainerView()
         
-        let valueAlignment = selectView(
+        let valueAlignment = self.selectView(
             action: #selector(self.toggleValueAlignment),
             items: Alignments,
             selected: self.valueAlignmentState
@@ -495,7 +502,7 @@ public class SpeedWidget: WidgetWrapper {
         valueAlignment.isEnabled = self.valueState
         self.valueAlignmentView = valueAlignment
         
-        let iconAlignment = selectView(
+        let iconAlignment = self.selectView(
             action: #selector(self.toggleIconAlignment),
             items: Alignments.filter({ $0.key != "center" }),
             selected: self.iconAlignmentState
@@ -503,7 +510,7 @@ public class SpeedWidget: WidgetWrapper {
         iconAlignment.isEnabled = self.icon != "none"
         self.iconAlignmentView = iconAlignment
         
-        let iconColor = selectView(
+        let iconColor = self.selectView(
             action: #selector(self.toggleIconColor),
             items: SpeedPictogramColor.filter({ $0.key != "none" }),
             selected: self.iconColorState
@@ -511,7 +518,7 @@ public class SpeedWidget: WidgetWrapper {
         iconColor.isEnabled = self.icon != "none"
         self.iconColorView = iconColor
         
-        let valueColor = selectView(
+        let valueColor = self.selectView(
             action: #selector(self.toggleValueColor),
             items: SpeedPictogramColor,
             selected: self.valueColorState
@@ -519,7 +526,7 @@ public class SpeedWidget: WidgetWrapper {
         valueColor.isEnabled = self.valueState
         self.valueColorView = valueColor
         
-        let displayMode = selectView(
+        let displayMode = self.selectView(
             action: #selector(self.changeDisplayMode),
             items: SensorsWidgetMode.filter({ $0.key == "oneRow" || $0.key == "twoRows"}),
             selected: self.modeState
@@ -534,7 +541,7 @@ public class SpeedWidget: WidgetWrapper {
         }
         
         view.addArrangedSubview(PreferencesSection([
-            PreferencesRow(localizedString("Value"), component: selectView(
+            PreferencesRow(localizedString("Value"), component: self.selectView(
                 action: #selector(self.changeDisplayValue),
                 items: sensorWidgetValue,
                 selected: self.displayValueState
@@ -543,7 +550,7 @@ public class SpeedWidget: WidgetWrapper {
         ]))
         
         view.addArrangedSubview(PreferencesSection([
-            PreferencesRow(localizedString("Pictogram"), component: selectView(
+            PreferencesRow(localizedString("Pictogram"), component: self.selectView(
                 action: #selector(self.toggleIcon),
                 items: SpeedPictogram,
                 selected: self.icon
@@ -553,29 +560,29 @@ public class SpeedWidget: WidgetWrapper {
         ]))
         
         view.addArrangedSubview(PreferencesSection([
-            PreferencesRow(localizedString("Value"), component: switchView(
+            PreferencesRow(localizedString("Value"), component: self.switchView(
                 action: #selector(self.toggleValue),
                 state: self.valueState
             )),
             PreferencesRow(localizedString("Colorize value"), component: valueColor),
             PreferencesRow(localizedString("Alignment"), component: valueAlignment),
-            PreferencesRow(localizedString("Units"), component: switchView(
+            PreferencesRow(localizedString("Units"), component: self.switchView(
                 action: #selector(self.toggleUnits),
                 state: self.unitsState
             ))
         ]))
         
         view.addArrangedSubview(PreferencesSection([
-            PreferencesRow(localizedString("Monochrome accent"), component: switchView(
+            PreferencesRow(localizedString("Monochrome accent"), component: self.switchView(
                 action: #selector(self.toggleMonochrome),
                 state: self.monochromeState
             )),
-            PreferencesRow(localizedString("Color of download"), component: colorSelectView(
+            PreferencesRow(localizedString("Color of download"), component: self.colorSelectView(
                 action: #selector(self.toggleInputColor),
                 items: SColor.allColors,
                 selected: self.inputColorState.key
             )),
-            PreferencesRow(localizedString("Color of upload"), component: colorSelectView(
+            PreferencesRow(localizedString("Color of upload"), component: self.colorSelectView(
                 action: #selector(self.toggleOutputColor),
                 items: SColor.allColors,
                 selected: self.outputColorState.key

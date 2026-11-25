@@ -107,7 +107,7 @@ public class Disks: Codable, RemoteType {
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(array, forKey: .array)
+        try container.encode(self.array, forKey: .array)
     }
     
     init() {}
@@ -300,11 +300,13 @@ public class Disk: Module {
         self.settingsView.setList(value)
         
         guard let d = value.first(where: { $0.mediaName == self.selectedDisk }) ?? value.first(where: { $0.root }) else {
+            self.summaryCallback(nil)
             return
         }
         
         self.portalView.utilizationCallback(d)
         self.notificationsView.utilizationCallback(d.percentage)
+        self.summaryCallback(d.size > 0 ? d.percentage : nil)
         
         self.menuBar.widgets.filter{ $0.isActive }.forEach { (w: SWidget) in
             switch w.item {
@@ -376,7 +378,7 @@ public class Disk: Module {
         
         self.menuBar.widgets.filter{ $0.isActive }.forEach { (w: SWidget) in
             switch w.item {
-            case let widget as SpeedWidget: 
+            case let widget as SpeedWidget:
                 widget.setValue(input: d.activity.read, output: d.activity.write)
             case let widget as NetworkChart:
                 widget.setValue(upload: Double(d.activity.write), download: Double(d.activity.read))

@@ -103,16 +103,6 @@ class RAM: XCTestCase {
         XCTAssertEqual(UsageReader.compressionPercent(compressedPages: 4_000_000, availablePages: 1_000_000), 80)
     }
 
-    func testUsageReader_compressionRatio() throws
-    {
-        XCTAssertEqual(UsageReader.compressionRatio(compressedPages: 0, availablePages: 0), 0)
-        XCTAssertEqual(UsageReader.compressionRatio(compressedPages: 0, availablePages: 1000), 0)
-        XCTAssertEqual(UsageReader.compressionRatio(compressedPages: 1000, availablePages: 1000), 0.5)
-        XCTAssertEqual(UsageReader.compressionRatio(compressedPages: 1000, availablePages: 0), 1)
-        XCTAssertEqual(UsageReader.compressionRatio(compressedPages: 2, availablePages: 1), 2.0/3.0)
-        XCTAssertEqual(UsageReader.compressionRatio(compressedPages: 23, availablePages: 12), 23.0/35.0)
-    }
-
     func testHistoryRuns_polylines() throws
     {
         let points: [CGPoint?] = [

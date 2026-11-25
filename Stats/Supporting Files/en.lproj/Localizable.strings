@@ -68,7 +68,6 @@
 "Cube" = "Cube";
 "Logarithmic" = "Logarithmic";
 "Fixed scale" = "Fixed";
-"Cores" = "Cores";
 "Core" = "Core";
 "Settings" = "Settings";
 "Name" = "Name";
@@ -89,6 +88,10 @@
 "Run" = "Run";
 "Stop" = "Stop";
 "Uninstall" = "Uninstall";
+"Uninstalling…" = "Uninstalling…";
+"Could not confirm automatic fan control" = "Could not confirm automatic fan control";
+"Fans may still be in manual mode. Remove the fan helper anyway?" = "Fans may still be in manual mode. Remove the fan helper anyway?";
+"Could not uninstall fan helper" = "Could not uninstall fan helper";
 "1 sec" = "1 sec";
 "2 sec" = "2 sec";
 "3 sec" = "3 sec";
@@ -167,8 +170,14 @@
 "Pause the Stats" = "Pause the Stats";
 "Resume the Stats" = "Resume the Stats";
 "Combined modules" = "Combined modules";
-"Show icon instead of widgets" = "Show icon instead of widgets";
+"Menu bar" = "Menu bar";
+"App icon" = "App icon";
+"Mini bars" = "Mini bars";
+"Concentric rings" = "Concentric rings";
+"Arc dial" = "Arc dial";
 "Combined details" = "Combined details";
+"Alternate details on click" = "Alternate details on click";
+"Hold Option or Shift, or both." = "Hold Option or Shift, or both.";
 "Spacing" = "Spacing";
 "Choose file" = "Choose file";
 "Stress tests" = "Stress tests";
@@ -205,6 +214,7 @@
 "Value" = "Value";
 "Colorize" = "Colorize";
 "Colorize value" = "Colorize value";
+"Gradient fill" = "Gradient fill";
 "Additional information" = "Additional information";
 "Base" = "Base";
 "Display mode" = "View mode";
@@ -316,15 +326,14 @@
 "Status" = "Status";
 "Utilization" = "Utilization";
 "Renderer utilization" = "Renderer utilization";
-"Renderer utilization history" = "Renderer utilization history";
 "Tiler utilization" = "Tiler utilization";
-"Tiler utilization history" = "Tiler utilization history";
 "GPU usage threshold" = "GPU usage threshold";
 "GPU usage is" = "GPU usage is %0";
 "ANE utilization" = "ANE utilization";
 "ANE utilization history" = "ANE utilization history";
 "FPS history" = "FPS history";
 "GPU utilization history" = "GPU utilization history";
+"Memory usage history" = "Memory usage history";
 
 // RAM
 "Memory usage" = "Memory usage";

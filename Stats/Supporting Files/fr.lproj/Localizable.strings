@@ -68,7 +68,6 @@
 "Cube" = "Cubique"; // gemma4:31b-it-qat
 "Logarithmic" = "Logarithmique";
 "Fixed scale" = "Fixe";
-"Cores" = "Cœurs";
 "Core" = "Cœur";
 "Settings" = "Paramètres";
 "Name" = "Nom";
@@ -89,6 +88,10 @@
 "Run" = "Exécuter"; // translategemma:4b
 "Stop" = "Arrêter";
 "Uninstall" = "Désinstaller";
+"Uninstalling…" = "Désinstallation en cours…";
+"Could not confirm automatic fan control" = "Impossible de confirmer le contrôle automatique des ventilateurs";
+"Fans may still be in manual mode. Remove the fan helper anyway?" = "Les ventilateurs sont peut-être encore en mode manuel. Voulez-vous quand même désinstaller l’assistant des ventilateurs ?";
+"Could not uninstall fan helper" = "Impossible de désinstaller l’assistant des ventilateurs";
 "1 sec" = "1 seconde"; // translategemma:4b
 "2 sec" = "2 secondes";
 "3 sec" = "3 secondes"; // translategemma:4b
@@ -167,7 +170,13 @@
 "Pause the Stats" = "Mettre Stats en pause";
 "Resume the Stats" = "Reprendre Stats";
 "Combined modules" = "Modules combinés";
-"Show icon instead of widgets" = "Afficher l’icône à la place des widgets";
+"App icon" = "Icône de l’application";
+"Mini bars" = "Mini-barres";
+"Concentric rings" = "Anneaux concentriques";
+"Arc dial" = "Jauge en arc";
+"Menu bar" = "Barre des menus";
+"Alternate details on click" = "Alterner les détails au clic";
+"Hold Option or Shift, or both." = "Maintenez Option ou Shift, ou les deux.";
 "Combined details" = "Détails combinés";
 "Spacing" = "Espacement";
 "Choose file" = "Choisir un fichier"; // gemma4:31b
@@ -204,6 +213,7 @@
 "Frame" = "Cadre";
 "Value" = "Valeur";
 "Colorize" = "Coloriser";
+"Gradient fill" = "Remplissage dégradé";
 "Colorize value" = "Coloriser la valeur";
 "Additional information" = "Informations supplémentaires";
 "Base" = "Base";
@@ -316,15 +326,14 @@
 "Status" = "Statut";
 "Utilization" = "Utilisation";
 "Renderer utilization" = "Utilisation du rendu";
-"Renderer utilization history" = "Historique d'utilisation du rendu"; // qwen3.8:27b
 "Tiler utilization" = "Utilisation du Tiler";
-"Tiler utilization history" = "Historique d'utilisation du Tiler"; // qwen3.8:27b
 "GPU usage threshold" = "Seuil d'utilisation du GPU";
 "GPU usage is" = "L'utilisation du GPU est de %0";
 "ANE utilization" = "Utilisation de l'ANE"; // qwen3.8:27b
 "ANE utilization history" = "Historique d'utilisation de l'ANE"; // qwen3.8:27b
 "FPS history" = "Historique des FPS"; // qwen3.8:27b
 "GPU utilization history" = "Historique d'utilisation du GPU"; // qwen3.8:27b
+"Memory usage history" = "Historique d’utilisation de la mémoire";
 
 // RAM
 "Memory usage" = "Utilisation de la mémoire";

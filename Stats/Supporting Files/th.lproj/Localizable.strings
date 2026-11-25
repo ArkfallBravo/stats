@@ -68,7 +68,6 @@
 "Cube" = "ลูกบาศก์";
 "Logarithmic" = "ลอการิทึม";
 "Fixed scale" = "คงที่"; // gemma4:31b
-"Cores" = "คอร์";
 "Core" = "คอร์"; // gemma4:31b
 "Settings" = "การตั้งค่า";
 "Name" = "ชื่อ"; // translategemma:4b
@@ -89,6 +88,10 @@
 "Run" = "เรียกใช้"; // gemma4:31b
 "Stop" = "หยุด"; // translategemma:4b
 "Uninstall" = "ถอนการติดตั้ง"; // translategemma:4b
+"Uninstalling…" = "กำลังถอนการติดตั้ง…";
+"Could not confirm automatic fan control" = "ไม่สามารถยืนยันได้ว่าพัดลมอยู่ในโหมดควบคุมอัตโนมัติ";
+"Fans may still be in manual mode. Remove the fan helper anyway?" = "พัดลมอาจยังอยู่ในโหมดควบคุมด้วยตนเอง ต้องการลบตัวช่วยพัดลมต่อไปหรือไม่";
+"Could not uninstall fan helper" = "ไม่สามารถถอนการติดตั้งตัวช่วยพัดลมได้";
 "1 sec" = "1 วินาที"; // translategemma:4b
 "2 sec" = "2 วินาที"; // translategemma:4b
 "3 sec" = "3 วินาที"; // translategemma:4b
@@ -167,7 +170,13 @@
 "Pause the Stats" = "หยุด Stats";
 "Resume the Stats" = "เริ่มต้น Stats";
 "Combined modules" = "โมดูลผสม";
-"Show icon instead of widgets" = "แสดงไอคอนแทนวิดเจ็ต";
+"App icon" = "ไอคอนแอป";
+"Mini bars" = "แถบขนาดเล็ก";
+"Concentric rings" = "วงแหวนร่วมศูนย์กลาง";
+"Arc dial" = "มาตรวัดแบบโค้ง";
+"Menu bar" = "แถบเมนู";
+"Alternate details on click" = "สลับรายละเอียดเมื่อคลิก";
+"Hold Option or Shift, or both." = "กด Option หรือ Shift หรือทั้งสองปุ่มค้างไว้";
 "Combined details" = "รายละเอียดรวม"; // gemma4:31b
 "Spacing" = "ระยะห่าง"; // translategemma:4b
 "Choose file" = "เลือกไฟล์"; // translategemma:4b
@@ -204,6 +213,7 @@
 "Frame" = "เฟรม";
 "Value" = "ค่า";
 "Colorize" = "สีสัน";
+"Gradient fill" = "การเติมสีไล่ระดับ";
 "Colorize value" = "ใส่สีให้ค่า";
 "Additional information" = "ข้อมูลเพิ่มเติม";
 "Base" = "ฐาน";
@@ -316,15 +326,14 @@
 "Status" = "สถานะ";
 "Utilization" = "ปริมาณการใช้งาน";
 "Renderer utilization" = "ปริมาณการใช้งาน Render";
-"Renderer utilization history" = "ประวัติการใช้งานเรนเดอร์"; // qwen3.8:27b
 "Tiler utilization" = "ปริมาณการใช้งาน Tiler";
-"Tiler utilization history" = "ประวัติการใช้งานไทเลอร์"; // qwen3.8:27b
 "GPU usage threshold" = "เกณฑ์การใช้งาน GPU";
 "GPU usage is" = "ปริมาณการใช้งาน GPU คือ %0";
 "ANE utilization" = "การใช้งาน ANE"; // qwen3.8:27b
 "ANE utilization history" = "ประวัติการใช้งาน ANE"; // qwen3.8:27b
 "FPS history" = "ประวัติ FPS"; // qwen3.8:27b
 "GPU utilization history" = "ประวัติการใช้งาน GPU"; // qwen3.8:27b
+"Memory usage history" = "ประวัติการใช้หน่วยความจำ";
 
 // RAM
 "Memory usage" = "การใช้หน่วยความจำ";

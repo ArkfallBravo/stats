@@ -68,7 +68,6 @@
 "Cube" = "Kubiczne";
 "Logarithmic" = "Logarytmiczne";
 "Fixed scale" = "Stałe";
-"Cores" = "Rdzeni";
 "Core" = "Rdzeń";
 "Settings" = "Ustawienia";
 "Name" = "Nazwa";
@@ -89,6 +88,10 @@
 "Run" = "Uruchom";
 "Stop" = "Zatrzymaj";
 "Uninstall" = "Odinstaluj";
+"Uninstalling…" = "Odinstalowywanie…";
+"Could not confirm automatic fan control" = "Nie udało się potwierdzić automatycznego sterowania wentylatorami";
+"Fans may still be in manual mode. Remove the fan helper anyway?" = "Wentylatory mogą nadal działać w trybie ręcznym. Czy mimo to usunąć narzędzie do sterowania wentylatorami?";
+"Could not uninstall fan helper" = "Nie udało się odinstalować narzędzia do sterowania wentylatorami";
 "1 sec" = "1 sek";
 "2 sec" = "2 sek";
 "3 sec" = "3 sek";
@@ -167,8 +170,14 @@
 "Pause the Stats" = "Wstrzymaj Stats";
 "Resume the Stats" = "Wznów Stats";
 "Combined modules" = "Połączone moduły";
-"Show icon instead of widgets" = "Pokaż ikonę zamiast widżetów";
-"Combined details" = "Złączone szczegóły";
+"App icon" = "Ikona aplikacji";
+"Mini bars" = "Minisłupki";
+"Concentric rings" = "Koncentryczne pierścienie";
+"Arc dial" = "Wskaźnik łukowy";
+"Menu bar" = "Pasek menu";
+"Alternate details on click" = "Przełączaj szczegóły po kliknięciu";
+"Hold Option or Shift, or both." = "Przytrzymaj Option lub Shift albo oba klawisze.";
+"Combined details" = "Połączone okienko";
 "Spacing" = "Rozstaw";
 "Choose file" = "Wybrać plik";
 "Stress tests" = "Testy obciążeniowe";
@@ -204,6 +213,7 @@
 "Frame" = "Ramka";
 "Value" = "Wartość";
 "Colorize" = "Kolorowanie";
+"Gradient fill" = "Wypełnienie gradientowe";
 "Colorize value" = "Kolorowanie wartości";
 "Additional information" = "Informacja dodatkowa";
 "Base" = "Podstawa";
@@ -316,15 +326,14 @@
 "Status" = "Stan";
 "Utilization" = "Wykorzystanie";
 "Renderer utilization" = "Wykorzystanie renderera";
-"Renderer utilization history" = "Historia wykorzystania renderera";
 "Tiler utilization" = "Wykorzystanie tilera";
-"Tiler utilization history" = "Historia wykorzystania tilera";
 "GPU usage threshold" = "Próg wykorzystania GPU";
 "GPU usage is" = "Użycie GPU %0";
 "ANE utilization" = "Wykorzystanie ANE";
 "ANE utilization history" = "Historia wykorzystania ANE";
 "FPS history" = "Historia FPS";
 "GPU utilization history" = "Historia wykorzystania GPU";
+"Memory usage history" = "Historia użycia pamięci";
 
 // RAM
 "Memory usage" = "Użycie pamięci";

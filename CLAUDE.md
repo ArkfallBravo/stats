@@ -64,6 +64,13 @@ The repo lives in iCloud Drive, so git commands occasionally fail transiently wi
 odd errors (e.g. `fatal: stash failed`) while iCloud is syncing the working tree —
 retrying the same command generally succeeds, and it leaves no partial state behind.
 
+iCloud also creates sync-conflict copies named `<file> 2.<ext>` (seen right after
+checkouts that rewrite many files, e.g. the 2026-11-24 upstream merge). They're
+byte-identical to the original. `.git/info/exclude` ignores `* [2-9].*` and
+`* [1-9][0-9].*` so they can't be committed, but that also hides them from
+`git status`; find them with `find . -path ./.git -prune -o -name '* [0-9].*' -print`.
+Stage files by name, not `git add -A`.
+
 ## Architecture
 
 ### Module system

@@ -124,8 +124,8 @@ public struct KeyValue_t: KeyValue_p, Codable {
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(key, forKey: .key)
-        try container.encode(value, forKey: .value)
+        try container.encode(self.key, forKey: .key)
+        try container.encode(self.value, forKey: .value)
     }
 }
 
@@ -137,16 +137,16 @@ public struct Units {
     }
     
     public var kilobytes: Double {
-        return Double(bytes) / 1_000
+        return Double(self.bytes) / 1_000
     }
     public var megabytes: Double {
-        return kilobytes / 1_000
+        return self.kilobytes / 1_000
     }
     public var gigabytes: Double {
-        return megabytes / 1_000
+        return self.megabytes / 1_000
     }
     public var terabytes: Double {
-        return gigabytes / 1_000
+        return self.gigabytes / 1_000
     }
     
     public func getReadableTuple(base: DataSizeBase = .byte, unit: String = NetworkSpeedUnitAuto) -> (String, String) {
@@ -158,7 +158,7 @@ public struct Units {
             return (self.formatSpeedValue(value), "\(speedPrefix)\(stringBase)/s")
         }
         
-        let value: Double = Double(bytes) * multiplier
+        let value: Double = Double(self.bytes) * multiplier
         switch value {
         case ..<1_000:
             return ("0", "K\(stringBase)/s")
@@ -181,12 +181,7 @@ public struct Units {
     }
     
     public func getReadableMemory(style: ByteCountFormatter.CountStyle = .file) -> String {
-        var value = FormatterCache.shared.readableMemory(Int64(self.bytes), style: style)
-        if let idx = value.lastIndex(of: ",") {
-            value.replaceSubrange(idx...idx, with: ".")
-        }
-        
-        return value
+        return FormatterCache.shared.readableMemory(Int64(self.bytes), style: style)
     }
     
     public func toUnit(_ unit: SizeUnit) -> Double {
@@ -212,32 +207,32 @@ public struct DiskSize {
     }
     
     public var kilobytes: Double {
-        return Double(value) / 1_000
+        return Double(self.value) / 1_000
     }
     public var megabytes: Double {
-        return kilobytes / 1_000
+        return self.kilobytes / 1_000
     }
     public var gigabytes: Double {
-        return megabytes / 1_000
+        return self.megabytes / 1_000
     }
     public var terabytes: Double {
-        return gigabytes / 1_000
+        return self.gigabytes / 1_000
     }
     
     public func getReadableMemory() -> String {
-        switch value {
+        switch self.value {
         case 0..<1_000:
             return "0 KB"
         case 1_000..<(1_000 * 1_000):
-            return String(format: "%.0f KB", kilobytes)
+            return String(format: "%.0f KB", self.kilobytes)
         case 1_000..<(1_000 * 1_000 * 1_000):
-            return String(format: "%.0f MB", megabytes)
+            return String(format: "%.0f MB", self.megabytes)
         case 1_000..<(1_000 * 1_000 * 1_000 * 1_000):
-            return String(format: "%.1f GB", gigabytes)
+            return String(format: "%.1f GB", self.gigabytes)
         case (1_000 * 1_000 * 1_000 * 1_000)...Int64.max:
-            return String(format: "%.1f TB", terabytes)
+            return String(format: "%.1f TB", self.terabytes)
         default:
-            return String(format: "%.0f KB", kilobytes)
+            return String(format: "%.0f KB", self.kilobytes)
         }
     }
 }
@@ -268,7 +263,7 @@ public class LabelField: NSTextField {
 }
 
 public class ValueField: NSTextField {
-    public init(frame: NSRect = NSRect.zero, _ value: String = "") {
+    public init(frame: NSRect = NSRect.zero, _ value: String = "", size: CGFloat = 13) {
         super.init(frame: frame)
         
         self.isEditable = false
@@ -281,7 +276,7 @@ public class ValueField: NSTextField {
         self.stringValue = value
         self.textColor = .textColor
         self.alignment = .trailing
-        self.font = NSFont.systemFont(ofSize: 13, weight: .regular)
+        self.font = NSFont.systemFont(ofSize: size, weight: .medium)
         
         self.cell?.usesSingleLineMode = true
     }
@@ -384,29 +379,22 @@ public func separatorView(_ title: String, origin: NSPoint = NSPoint(x: 0, y: 0)
     let view: NSView = NSView(frame: NSRect(x: origin.x, y: origin.y, width: width, height: 30))
     view.heightAnchor.constraint(equalToConstant: view.bounds.height).isActive = true
     
-    let labelView: NSTextField = NSTextField(labelWithString: "")
+    let labelView = NSTextField(labelWithString: title)
     labelView.translatesAutoresizingMaskIntoConstraints = false
     labelView.alignment = .center
-    labelView.isBezeled = false
-    labelView.isEditable = false
-    labelView.drawsBackground = false
-    labelView.attributedStringValue = NSAttributedString(string: title.uppercased(), attributes: [
-        .font: NSFont.systemFont(ofSize: 10, weight: .semibold),
-        .foregroundColor: NSColor.tertiaryLabelColor,
-        .kern: 1.0
-    ])
+    labelView.font = .systemFont(ofSize: 11)
+    labelView.textColor = .secondaryLabelColor
+    labelView.alphaValue = 0.65
     labelView.setContentHuggingPriority(.required, for: .horizontal)
     labelView.setContentCompressionResistancePriority(.required, for: .horizontal)
     
-    let leftLine: NSView = NSView()
+    let leftLine = NSBox()
     leftLine.translatesAutoresizingMaskIntoConstraints = false
-    leftLine.wantsLayer = true
-    leftLine.layer?.backgroundColor = NSColor.separatorColor.cgColor
+    leftLine.boxType = .separator
     
-    let rightLine: NSView = NSView()
+    let rightLine = NSBox()
     rightLine.translatesAutoresizingMaskIntoConstraints = false
-    rightLine.wantsLayer = true
-    rightLine.layer?.backgroundColor = NSColor.separatorColor.cgColor
+    rightLine.boxType = .separator
     
     view.addSubview(leftLine)
     view.addSubview(labelView)
@@ -865,7 +853,7 @@ public class ColorView: NSView {
         super.init(frame: frame)
         
         self.wantsLayer = true
-        self.layer?.backgroundColor = (state ? self.color : inactiveColor).cgColor
+        self.layer?.backgroundColor = (state ? self.color : self.inactiveColor).cgColor
         self.layer?.cornerRadius = radius
     }
     
@@ -874,8 +862,8 @@ public class ColorView: NSView {
     }
     
     public func setState(_ newState: Bool) {
-        if newState != state {
-            self.layer?.backgroundColor = (newState ? self.color : inactiveColor).cgColor
+        if newState != self.state {
+            self.layer?.backgroundColor = (newState ? self.color : self.inactiveColor).cgColor
             self.state = newState
         }
     }
@@ -1372,6 +1360,11 @@ public class SMCHelper {
                 if pending.isEmpty { completion(success) }
             }
         }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            guard !pending.isEmpty else { return }
+            pending.removeAll()
+            completion(false)
+        }
         for id in ids {
             guard let helper = self.helper({ connected in
                 if !connected { finish(id, false) }
@@ -1383,8 +1376,12 @@ public class SMCHelper {
     }
     
     public func uninstall(silent: Bool = false, completion: @escaping (Bool) -> Void = { _ in }) {
+        self.uninstall(confirmRemoval: { false }, silent: silent, completion: completion)
+    }
+    
+    public func uninstall(confirmRemoval: @escaping () -> Bool, silent: Bool = false, completion: @escaping (Bool) -> Void = { _ in }) {
         self.restoreFanModes { restored in
-            guard restored else {
+            guard restored || confirmRemoval() else {
                 print("failed to restore fan modes; SMC helper was not removed")
                 completion(false)
                 return
@@ -1461,8 +1458,8 @@ public class ViewCopy: CALayer {
         guard let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
         view.cacheDisplay(in: view.bounds, to: bitmap)
         
-        frame = view.frame
-        contents = bitmap.cgImage
+        self.frame = view.frame
+        self.contents = bitmap.cgImage
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -1587,7 +1584,7 @@ var isDarkMode: Bool {
 public class PreferencesSection: NSStackView {
     private let container: NSStackView = NSStackView()
     private var subtitleField: NSTextField?
-
+    
     public init(title: String = "", subtitle: String = "", id: String? = nil, _ components: [NSView] = []) {
         super.init(frame: .zero)
         
@@ -1598,7 +1595,7 @@ public class PreferencesSection: NSStackView {
             self.identifier = NSUserInterfaceItemIdentifier(id)
         }
         
-        if title != "" || subtitle != "" {
+        if !title.isEmpty || !subtitle.isEmpty {
             self.addHeader(title: title, subtitle: subtitle)
         }
         
@@ -1887,7 +1884,7 @@ public class StepperInput: NSStackView, NSTextFieldDelegate, PreferencesSwitchWi
             }
         } else if let units {
             self.units = units
-            self.unitsView = selectView(
+            self.unitsView = self.selectView(
                 action: #selector(self.onUnitChange),
                 items: units,
                 selected: unit
@@ -1955,7 +1952,7 @@ public class PreferencesSwitch: NSStackView {
         self.alignment = .centerY
         self.spacing = Constants.Settings.margin
         
-        let btn = switchView(action: #selector(self.callback), state: state)
+        let btn = self.switchView(action: #selector(self.callback), state: state)
         with.isEnabled = state
         
         self.addArrangedSubview(NSView())
@@ -1975,7 +1972,7 @@ public class PreferencesSwitch: NSStackView {
 
 public class HelpHUD: NSPanel {
     private let text: String
-
+    
     public init(_ text: String, origin: CGPoint = CGPoint(x: 0, y: 0), size: CGSize = CGSize(width: 420, height: 300)) {
         self.text = text
         super.init(
@@ -2334,6 +2331,7 @@ public class LinkButton: NSButton {
     }
     
     @objc private func openURL() {
+        (self.window as? PopupWindow)?.dismissIfUnlocked()
         NSWorkspace.shared.open(self.url)
     }
     
@@ -2528,5 +2526,102 @@ public struct UserContext {
             }
         }
         return CFPreferencesCopyAppValue("NSStatusItem Visible FocusModes" as CFString, "com.apple.controlcenter" as CFString) as? Bool ?? false
+    }
+}
+
+public class PopupDashboardDetailsRow: NSStackView {
+    public let valueView: NSTextField
+    
+    public init(icon: String? = nil, title: String? = nil, dafaultValue: String = "") {
+        self.valueView = NSTextField(labelWithString: dafaultValue)
+        super.init(frame: NSRect.zero)
+        
+        self.orientation = .horizontal
+        self.alignment = .centerY
+        self.spacing = Constants.Popup.margins
+        
+        if let icon, let symbol = NSImage(systemSymbolName: icon, accessibilityDescription: nil) {
+            let image = NSImageView(image: symbol)
+            image.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
+            image.contentTintColor = .secondaryLabelColor
+            image.widthAnchor.constraint(equalToConstant: 17).isActive = true
+            self.addArrangedSubview(image)
+        }
+        
+        let labels = NSStackView()
+        labels.orientation = .vertical
+        labels.alignment = .leading
+        labels.spacing = 0
+        
+        self.valueView.font = .systemFont(ofSize: 12, weight: .semibold)
+        labels.addArrangedSubview(self.valueView)
+        
+        if let title {
+            let label = NSTextField(labelWithString: title)
+            label.font = .systemFont(ofSize: 8)
+            label.textColor = .secondaryLabelColor
+            labels.addArrangedSubview(label)
+        }
+        
+        self.addArrangedSubview(labels)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+public class PopupValuesBlocks: NSStackView {
+    public init() {
+        super.init(frame: .zero)
+        
+        self.orientation = .horizontal
+        self.alignment = .centerY
+        self.distribution = .fillEqually
+        self.spacing = Constants.Popup.spacing
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    public func addBlock(title: String, value: String = "", color: NSColor? = nil) -> NSTextField {
+        let block = NSStackView()
+        block.orientation = .vertical
+        block.alignment = .centerX
+        block.spacing = Constants.Popup.spacing
+        
+        let header = NSStackView()
+        header.orientation = .horizontal
+        header.alignment = .centerY
+        header.spacing = 4
+        header.setHuggingPriority(.required, for: .horizontal)
+        if let color {
+            header.addArrangedSubview(ColorBlock(color: color))
+        }
+        
+        let label = NSTextField(labelWithString: title)
+        label.font = .systemFont(ofSize: 10)
+        label.textColor = .secondaryLabelColor
+        label.lineBreakMode = .byTruncatingTail
+        label.toolTip = title
+        header.addArrangedSubview(label)
+        block.addArrangedSubview(header)
+        
+        let field = NSTextField(labelWithString: value)
+        field.font = .systemFont(ofSize: 16, weight: .semibold)
+        field.alignment = .center
+        field.lineBreakMode = .byTruncatingTail
+        field.setAccessibilityLabel(title)
+        block.addArrangedSubview(field)
+        let first = self.arrangedSubviews.first
+        self.addArrangedSubview(block)
+        if let first {
+            block.widthAnchor.constraint(equalTo: first.widthAnchor).isActive = true
+        }
+        
+        header.widthAnchor.constraint(lessThanOrEqualTo: block.widthAnchor).isActive = true
+        field.widthAnchor.constraint(equalTo: block.widthAnchor).isActive = true
+        return field
     }
 }

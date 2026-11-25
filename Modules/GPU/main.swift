@@ -26,29 +26,25 @@ public struct GPU_Info: Codable {
     public let type: GPU_type
     
     public let IOClass: String
-    public var vendor: String? = nil
     public let model: String
-    public var cores: Int? = nil
     
     public var state: Bool = true
     
-    public var fanSpeed: Int? = nil
-    public var coreClock: Int? = nil
-    public var memoryClock: Int? = nil
-    public var temperature: Double? = nil
     public var utilization: Double? = nil
     public var renderUtilization: Double? = nil
     public var tilerUtilization: Double? = nil
     public var aneUtilization: Double? = nil
+    
     public var fps: Double? = nil
     
-    init(id: String, type: GPU_type, IOClass: String, vendor: String? = nil, model: String, cores: Int?, utilization: Double? = nil, render: Double? = nil, tiler: Double? = nil) {
+    public var memory: Double? = nil
+    public var memoryLimit: Double? = nil
+    
+    init(id: String, type: GPU_type, IOClass: String, model: String, utilization: Double? = nil, render: Double? = nil, tiler: Double? = nil) {
         self.id = id
         self.type = type
         self.IOClass = IOClass
-        self.vendor = vendor
         self.model = model
-        self.cores = cores
         self.utilization = utilization
         self.renderUtilization = render
         self.tilerUtilization = tiler
@@ -83,7 +79,7 @@ public class GPUs: Codable, RemoteType {
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(list, forKey: .list)
+        try container.encode(self.list, forKey: .list)
     }
     
     init() {}
@@ -181,18 +177,24 @@ public class GPU: Module {
     }
     
     private func infoCallback(_ raw: GPUs?) {
-        guard raw != nil && !raw!.list.isEmpty, let value = raw, self.enabled else { return }
+        guard let value = raw, !value.list.isEmpty, self.enabled else {
+            self.summaryCallback(nil)
+            return
+        }
         
         self.settingsView.setList(value)
         
         let activeGPUs = value.active()
         guard let activeGPU = activeGPUs.first(where: { $0.state }) ?? activeGPUs.first else {
+            self.summaryCallback(nil)
             return
         }
         let selectedGPU: GPU_Info = activeGPUs.first{ $0.model == self.selectedGPU } ?? activeGPU
         guard let utilization = selectedGPU.utilization else {
+            self.summaryCallback(nil)
             return
         }
+        self.summaryCallback(utilization)
         
         self.popupView.loadCallback(selectedGPU)
         self.portalView.callback(selectedGPU)
@@ -221,8 +223,8 @@ public class GPU: Module {
                     case "$render": replacement = "\(Int((selectedGPU.renderUtilization ?? 0)*100))%"
                     case "$tiler": replacement = "\(Int((selectedGPU.tilerUtilization ?? 0)*100))%"
                     case "$ane": replacement = "\(Int((selectedGPU.aneUtilization ?? 0)*100))%"
+                    case "$memory": replacement = Units(bytes: Int64(selectedGPU.memory ?? 0)).getReadableMemory(style: .memory)
                     case "$fps": replacement = "\(Int((selectedGPU.fps ?? 0).rounded()))"
-                    case "$temperature": replacement = temperature(selectedGPU.temperature ?? 0)
                     default: return
                     }
                     

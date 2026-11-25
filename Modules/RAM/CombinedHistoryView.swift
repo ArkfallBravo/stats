@@ -58,13 +58,13 @@ internal class CombinedHistoryView: NSView
     {
         didSet
         {
-            self.redrawIfVisible()
+            self.historyUpdated()
         }
     }
 
-    init(frame: NSRect, num: Int)
+    init(frame: NSRect, history: HistoryRing<CombinedSample>)
     {
-        self.history = HistoryRing(capacity: num)
+        self.history = history
         super.init(frame: frame)
         self.wantsLayer = true
     }
@@ -74,17 +74,17 @@ internal class CombinedHistoryView: NSView
         fatalError("init(coder:) has not been implemented")
     }
 
-    func addSample(_ sample: CombinedSample)
+    // Redraws the chart from its history, if the chart is on screen.
+    func historyUpdated()
     {
-        self.history.append(sample)
-        self.redrawIfVisible()
-    }
-
-    // Resizes the history to `num` samples, clearing it.
-    func reinit(_ num: Int)
-    {
-        self.history.reset(capacity: num)
-        self.redrawIfVisible()
+        DispatchQueue.main.async
+        { [weak self] in
+            guard let self, self.window?.isVisible ?? false else
+            {
+                return
+            }
+            self.display()
+        }
     }
 
     override func draw(_ dirtyRect: NSRect)
@@ -101,18 +101,6 @@ internal class CombinedHistoryView: NSView
         self.stroke(HistoryRuns.polylines(series.points(\.usage)), color: palette.color(.usage))
         self.strokeSolid(HistoryRuns.levelPolylines(series.levelPoints(\.pressure)), palette: palette)
         self.strokeDashed(HistoryRuns.levelPolylines(series.levelPoints(\.compression)), palette: palette)
-    }
-
-    private func redrawIfVisible()
-    {
-        DispatchQueue.main.async
-        { [weak self] in
-            guard let self, self.window?.isVisible ?? false else
-            {
-                return
-            }
-            self.display()
-        }
     }
 
     private func linePath(_ points: [CGPoint]) -> NSBezierPath

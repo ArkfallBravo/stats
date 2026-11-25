@@ -19,6 +19,7 @@ You can use a combination of any of the variables.
 <ul>
 <li>$mem.used/$mem.total ($pressure.value)</li>
 <li>Pressure: $pressure.value</li>
+<li>Pressure: $pressure.percentage</li>
 <li>Free: $mem.free</li>
 </ul>
 <h2>Available variables</h2>
@@ -39,6 +40,7 @@ You can use a combination of any of the variables.
 <li><b>$swap.free</b>: <small>Free swap memory.</small></li>
 <li><b>$pressure.value</b>: <small>Pressure value (normal, warning, critical).</small></li>
 <li><b>$pressure.level</b>: <small>Pressure level (1, 2, 4).</small></li>
+<li><b>$pressure.percentage</b>: <small>Memory pressure percentage (0–100%, or - when unavailable).</small></li>
 <li><b>$pressure.compression</b>: <small>Compressed memory as a share of all pageable memory. The kernel enters warning above 50% and critical above ~66% (Macs over 3 GB).</small></li>
 </ul>
 """
@@ -89,12 +91,12 @@ internal class Settings: NSStackView, Settings_v, NSTextFieldDelegate {
         self.subviews.forEach{ $0.removeFromSuperview() }
         
         self.addArrangedSubview(PreferencesSection([
-            PreferencesRow(localizedString("Update interval"), component: selectView(
+            PreferencesRow(localizedString("Update interval"), component: self.selectView(
                 action: #selector(self.changeUpdateInterval),
                 items: ReaderUpdateIntervals,
                 selected: "\(self.updateIntervalValue)"
             )),
-            PreferencesRow(localizedString("Update interval for top processes"), component: selectView(
+            PreferencesRow(localizedString("Update interval for top processes"), component: self.selectView(
                 action: #selector(self.changeUpdateTopInterval),
                 items: ReaderUpdateIntervals,
                 selected: "\(self.updateTopIntervalValue)"
@@ -102,12 +104,12 @@ internal class Settings: NSStackView, Settings_v, NSTextFieldDelegate {
         ]))
         
         self.addArrangedSubview(PreferencesSection([
-            PreferencesRow(localizedString("Combined processes"), component: switchView(
-                action: #selector(toggleCombinedProcesses),
+            PreferencesRow(localizedString("Combined processes"), component: self.switchView(
+                action: #selector(self.toggleCombinedProcesses),
                 state: self.combinedProcessesState
             )),
-            PreferencesRow(localizedString("Number of top processes"), component: selectView(
-                action: #selector(changeNumberOfProcesses),
+            PreferencesRow(localizedString("Number of top processes"), component: self.selectView(
+                action: #selector(self.changeNumberOfProcesses),
                 items: NumbersOfProcesses.map{ KeyValue_t(key: "\($0)", value: "\($0)") },
                 selected: "\(self.numberOfProcesses)"
             )),
@@ -122,10 +124,10 @@ internal class Settings: NSStackView, Settings_v, NSTextFieldDelegate {
             ))
         ]))
         
-        if !widgets.filter({ $0 == .barChart }).isEmpty {
+        if widgets.contains(.barChart) {
             self.addArrangedSubview(PreferencesSection([
-                PreferencesRow(localizedString("Split the value (App/Wired/Compressed)"), component: switchView(
-                    action: #selector(toggleSplitValue),
+                PreferencesRow(localizedString("Split the value (App/Wired/Compressed)"), component: self.switchView(
+                    action: #selector(self.toggleSplitValue),
                     state: self.splitValueState
                 ))
             ]))

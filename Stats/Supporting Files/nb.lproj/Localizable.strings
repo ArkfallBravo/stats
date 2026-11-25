@@ -68,7 +68,6 @@
 "Cube" = "Kubisk";
 "Logarithmic" = "Logaritmisk";
 "Fixed scale" = "Fast"; // gemma4:31b
-"Cores" = "Kjerner";
 "Core" = "Kjerne"; // translategemma:4b
 "Settings" = "Innstillinger";
 "Name" = "Navn";
@@ -89,6 +88,10 @@
 "Run" = "Kjør"; // translategemma:4b
 "Stop" = "Stopp"; // translategemma:4b
 "Uninstall" = "Avinstaller"; // gemma4:31b
+"Uninstalling…" = "Avinstallerer…";
+"Could not confirm automatic fan control" = "Kunne ikke bekrefte at viftene styres automatisk";
+"Fans may still be in manual mode. Remove the fan helper anyway?" = "Viftene kan fortsatt være i manuell modus. Vil du fjerne viftehjelperen likevel?";
+"Could not uninstall fan helper" = "Kunne ikke avinstallere viftehjelperen";
 "1 sec" = "1 sek"; // gemma4:31b
 "2 sec" = "2 sek"; // gemma4:31b
 "3 sec" = "3 sek"; // gemma4:31b
@@ -167,7 +170,13 @@
 "Pause the Stats" = "Sett Stats på pause";
 "Resume the Stats" = "Gjenoppta Stats";
 "Combined modules" = "Kombinerte moduler";
-"Show icon instead of widgets" = "Vis ikon i stedet for widgeter";
+"App icon" = "Appikon";
+"Mini bars" = "Ministolper";
+"Concentric rings" = "Konsentriske ringer";
+"Arc dial" = "Bueindikator";
+"Menu bar" = "Menylinje";
+"Alternate details on click" = "Bytt detaljer ved klikk";
+"Hold Option or Shift, or both." = "Hold inne Option eller Shift, eller begge.";
 "Combined details" = "Kombinerte detaljer"; // gemma4:31b
 "Spacing" = "Mellomrom";
 "Choose file" = "Velg fil"; // translategemma:4b
@@ -204,6 +213,7 @@
 "Frame" = "Ramme";
 "Value" = "Verdi";
 "Colorize" = "Fargelegg";
+"Gradient fill" = "Gradientfyll";
 "Colorize value" = "Fargelegg verdi";
 "Additional information" = "Tilleggsinformasjon";
 "Base" = "Basis"; // gemma4:31b
@@ -316,15 +326,14 @@
 "Status" = "Status";
 "Utilization" = "Bruk";
 "Renderer utilization" = "Renderbruk";
-"Renderer utilization history" = "Renderingutnyttelsehistorikk"; // qwen3.8:27b
 "Tiler utilization" = "Tilerbruk";
-"Tiler utilization history" = "Tilerutnyttelsehistorikk"; // qwen3.8:27b
 "GPU usage threshold" = "GPU-bruksgrense";
 "GPU usage is" = "GPU-bruk er %0";
 "ANE utilization" = "ANE-utnyttelse"; // qwen3.8:27b
 "ANE utilization history" = "ANE-utnyttelsehistorikk"; // qwen3.8:27b
 "FPS history" = "FPS-historikk"; // qwen3.8:27b
 "GPU utilization history" = "GPU-utnyttelsehistorikk"; // qwen3.8:27b
+"Memory usage history" = "Historikk for minnebruk";
 
 // RAM
 "Memory usage" = "Minnebruk";

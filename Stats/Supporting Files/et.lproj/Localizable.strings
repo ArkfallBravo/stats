@@ -68,7 +68,6 @@
 "Cube" = "Kuup";
 "Logarithmic" = "Logaritmiline";
 "Fixed scale" = "Fikseeritud skaala";
-"Cores" = "Tuumad";
 "Core" = "Tuum";
 "Settings" = "Seaded";
 "Name" = "Nimi";
@@ -89,6 +88,10 @@
 "Run" = "Käivita";
 "Stop" = "Peata";
 "Uninstall" = "Desinstalleeri";
+"Uninstalling…" = "Desinstallimine…";
+"Could not confirm automatic fan control" = "Ventilaatorite automaatset juhtimist ei õnnestunud kinnitada";
+"Fans may still be in manual mode. Remove the fan helper anyway?" = "Ventilaatorid võivad endiselt olla käsitsijuhtimisel. Kas eemaldada ventilaatoriabiline sellest hoolimata?";
+"Could not uninstall fan helper" = "Ventilaatoriabilist ei õnnestunud desinstallida";
 "1 sec" = "1 sekund";
 "2 sec" = "2 sekundit";
 "3 sec" = "3 sekundit";
@@ -167,7 +170,13 @@
 "Pause the Stats" = "Peata Stats";
 "Resume the Stats" = "Jätka Stats";
 "Combined modules" = "Kombineeritud moodulid";
-"Show icon instead of widgets" = "Näita vidinate asemel ikooni";
+"App icon" = "Rakenduse ikoon";
+"Mini bars" = "Miniribad";
+"Concentric rings" = "Kontsentrilised rõngad";
+"Arc dial" = "Kaarnäidik";
+"Menu bar" = "Menüüriba";
+"Alternate details on click" = "Vaheta üksikasju klõpsamisel";
+"Hold Option or Shift, or both." = "Hoia all klahvi Option või Shift või mõlemat.";
 "Combined details" = "Ühendatud andmed";
 "Spacing" = "Vahekaugus";
 "Choose file" = "Vali fail";
@@ -204,6 +213,7 @@
 "Frame" = "Raam";
 "Value" = "Väärtus";
 "Colorize" = "Värvi";
+"Gradient fill" = "Üleminekutäide";
 "Colorize value" = "Värvi väärtus";
 "Additional information" = "Lisateave";
 "Base" = "Alus";
@@ -316,15 +326,14 @@
 "Status" = "Olek";
 "Utilization" = "Kasutus";
 "Renderer utilization" = "Renderdamise kasutus";
-"Renderer utilization history" = "Renderduse kasutuse ajalugu"; // qwen3.8:27b
 "Tiler utilization" = "Osapõhise renderdaja kasutus";
-"Tiler utilization history" = "Tileri kasutuse ajalugu"; // qwen3.8:27b
 "GPU usage threshold" = "GPU kasutuslävi";
 "GPU usage is" = "GPU kasutus on %0";
 "ANE utilization" = "ANE kasutus"; // qwen3.8:27b
 "ANE utilization history" = "ANE kasutusajalugu"; // qwen3.8:27b
 "FPS history" = "FPS-i ajalugu"; // qwen3.8:27b
 "GPU utilization history" = "GPU kasutuse ajalugu"; // qwen3.8:27b
+"Memory usage history" = "Mälukasutuse ajalugu";
 
 // RAM
 "Memory usage" = "Mälu kasutus";

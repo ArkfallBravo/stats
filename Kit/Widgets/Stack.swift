@@ -35,6 +35,7 @@ public class StackWidget: WidgetWrapper {
     private var alignmentState: String = "left"
     
     private var values: [Stack_t] = []
+    private var stickyWidths: [String: CGFloat] = [:]
     private let textCache = WidgetTextCache(limit: 256)
     
     private var oneRowWidth: CGFloat = 45
@@ -180,7 +181,9 @@ public class StackWidget: WidgetWrapper {
         
         var width: CGFloat = self.oneRowWidth
         if !fixedSizeState {
-            width = entry.width.rounded(.up) + 2
+            let key = "one|\(element.key)"
+            width = max(entry.width.rounded(.up) + 2, self.stickyWidths[key] ?? 0)
+            self.stickyWidths[key] = width
         }
         
         let rect = CGRect(x: x, y: (Constants.Widget.height-13)/2, width: width, height: 13)
@@ -219,7 +222,9 @@ public class StackWidget: WidgetWrapper {
         
         var width: CGFloat = self.twoRowWidth
         if !fixedSizeState {
-            width = max(20, max(top.width, bottom?.width ?? 0)).rounded(.up) + 2
+            let key = "two|\(topElement.key)|\(bottomElement?.key ?? "")"
+            width = max(max(20, max(top.width, bottom?.width ?? 0)).rounded(.up) + 2, self.stickyWidths[key] ?? 0)
+            self.stickyWidths[key] = width
         }
         
         top.string.draw(with: CGRect(x: x, y: rowHeight+1, width: width, height: rowHeight))
@@ -264,23 +269,23 @@ public class StackWidget: WidgetWrapper {
         let view = SettingsContainerView()
         
         var rows = [
-            PreferencesRow(localizedString("Display mode"), component: selectView(
+            PreferencesRow(localizedString("Display mode"), component: self.selectView(
                 action: #selector(self.changeDisplayMode),
                 items: SensorsWidgetMode,
                 selected: self.modeState.rawValue
             )),
-            PreferencesRow(localizedString("Monospaced font"), component: switchView(
+            PreferencesRow(localizedString("Monospaced font"), component: self.switchView(
                 action: #selector(self.toggleMonospacedFont),
                 state: self.monospacedFontState
             )),
-            PreferencesRow(localizedString("Alignment"), component: selectView(
+            PreferencesRow(localizedString("Alignment"), component: self.selectView(
                 action: #selector(self.toggleAlignment),
                 items: Alignments,
                 selected: self.alignmentState
             ))
         ]
         if self.title != "Clock" {
-            rows.append(PreferencesRow(localizedString("Static width"), component: switchView(
+            rows.append(PreferencesRow(localizedString("Static width"), component: self.switchView(
                 action: #selector(self.toggleSize),
                 state: self.fixedSizeState
             )))
@@ -360,7 +365,7 @@ private class OrderTableView: NSView, NSTableViewDelegate, NSTableViewDataSource
         self.tableView.headerView = nil
         self.tableView.backgroundColor = NSColor.clear
         self.tableView.columnAutoresizingStyle = .firstColumnOnlyAutoresizingStyle
-        self.tableView.registerForDraggedTypes([dragDropType])
+        self.tableView.registerForDraggedTypes([self.dragDropType])
         self.tableView.gridColor = .gridColor
         self.tableView.gridStyleMask = [.solidVerticalGridLineMask, .solidHorizontalGridLineMask]
         self.tableView.style = .plain

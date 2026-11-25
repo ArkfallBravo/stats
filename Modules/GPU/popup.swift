@@ -13,9 +13,9 @@ import Cocoa
 import Kit
 
 internal class Popup: PopupWrapper {
-    private let dashboardHeight: CGFloat = 90
-    private let chartHeight: CGFloat = 90 + Constants.Popup.separatorHeight
-    private let detailsHeight: CGFloat = (22*7) + Constants.Popup.separatorHeight
+    private let chartHistory = LineChartData(capacity: 180)
+    private let memoryHistory = LineChartData(capacity: 180)
+    private let chartHeight: CGFloat = 90
     
     private let loadCache = PopupCache<GPU_Info>()
     private let processesCache = PopupCache<[TopProcess]>()
@@ -34,20 +34,15 @@ internal class Popup: PopupWrapper {
     }
     
     private var usageCircle: PieChartView? = nil
-    private var renderCircle: PieChartView? = nil
-    private var tilerCircle: PieChartView? = nil
     
     private var chart: LineChartView? = nil
+    private var memoryChart: LineChartView? = nil
     private var lineChartHistory: Int = 180
     private var lineChartScale: Scale = .none
     private var lineChartFixedScale: Double = 1
     
-    private var modelField: NSTextField? = nil
-    private var coresField: NSTextField? = nil
-    private var utilizationField: NSTextField? = nil
-    private var renderField: NSTextField? = nil
-    private var tilerField: NSTextField? = nil
     private var aneField: NSTextField? = nil
+    private var memoryField: NSTextField? = nil
     private var fpsField: NSTextField? = nil
     
     public init(_ module: ModuleType) {
@@ -56,21 +51,29 @@ internal class Popup: PopupWrapper {
         self.orientation = .vertical
         self.distribution = .fill
         self.spacing = 0
-        
-        self.addArrangedSubview(self.initDashboard())
-        self.addArrangedSubview(self.initChart())
-        self.addArrangedSubview(self.initDetails())
-        self.addArrangedSubview(self.initProcesses())
-        
-        self.recalculateHeight()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    public override func updateLayer() {
-        self.chart?.display()
+    public override func loadContent() {
+        self.addSection(self.initDashboard())
+        self.addSection(self.initChart())
+        self.addSection(self.initProcesses())
+        
+        self.resizeToFitContent()
+    }
+    
+    public override func unloadContent() {
+        self.processes = nil
+        self.processesView = nil
+        self.usageCircle = nil
+        self.aneField = nil
+        self.memoryField = nil
+        self.fpsField = nil
+        self.chart = nil
+        self.memoryChart = nil
     }
     
     public override func appear() {
@@ -82,81 +85,88 @@ internal class Popup: PopupWrapper {
         self.processes?.setLock(false)
     }
     
-    private func recalculateHeight() {
-        let h = self.dashboardHeight + self.chartHeight + self.detailsHeight + self.processesHeight
-        if self.frame.size.height != h {
-            self.setFrameSize(NSSize(width: self.frame.width, height: h))
-            self.sizeCallback?(self.frame.size)
-        }
+    public override func updateLayer() {
+        self.chart?.display()
+        self.memoryChart?.display()
     }
+    
+    // MARK: - Views
     
     private func initDashboard() -> NSView {
-        let view: NSView = NSView(frame: NSRect(x: 0, y: 0, width: self.frame.width, height: self.dashboardHeight))
+        let view: NSStackView = NSStackView(frame: NSRect(x: 0, y: 0, width: self.frame.width, height: Constants.Popup.dashboardHeight))
         view.heightAnchor.constraint(equalToConstant: view.bounds.height).isActive = true
+        view.orientation = .horizontal
+        view.distribution = .fillEqually
+        view.spacing = Constants.Popup.margins
+        view.edgeInsets = .init(top: Constants.Popup.margins, left: Constants.Popup.margins, bottom: Constants.Popup.margins, right: Constants.Popup.margins)
         
-        let usageSize = self.dashboardHeight-20
-        let usageX = (view.frame.width - usageSize)/2
+        let chart = PieChartView(drawValue: true, lineWidth: 10)
+        chart.toolTip = localizedString("GPU utilization")
+        self.usageCircle = chart
         
-        let usage = NSView(frame: NSRect(x: usageX, y: (view.frame.height - usageSize)/2, width: usageSize, height: usageSize))
-        let render = NSView(frame: NSRect(x: (usageX - 50)/2, y: (view.frame.height - 50)/2 - 3, width: 50, height: 50))
-        let tiler = NSView(frame: NSRect(x: (usageX+usageSize) + (usageX - 50)/2, y: 0, width: 50, height: self.dashboardHeight))
+        let details = NSStackView()
+        details.orientation = .vertical
+        details.alignment = .leading
+        details.spacing = Constants.Popup.spacing*2
         
-        self.usageCircle = PieChartView(frame: NSRect(x: 0, y: 0, width: usage.frame.width, height: usage.frame.height), drawValue: true)
-        self.usageCircle!.toolTip = localizedString("Utilization")
-        usage.addSubview(self.usageCircle!)
+        let ane = PopupDashboardDetailsRow(
+            icon: "cpu",
+            title: localizedString("ANE utilization"),
+            dafaultValue: "n/a"
+        )
+        self.aneField = ane.valueView
+        let memory = PopupDashboardDetailsRow(
+            icon: "memorychip",
+            title: localizedString("Memory usage"),
+            dafaultValue: "n/a"
+        )
+        self.memoryField = memory.valueView
+        let fps = PopupDashboardDetailsRow(
+            icon: "waveform.path.ecg",
+            title: "FPS",
+            dafaultValue: "n/a"
+        )
+        self.fpsField = fps.valueView
         
-        self.renderCircle = PieChartView(frame: NSRect(x: 0, y: 0, width: render.frame.width, height: render.frame.height), drawValue: true)
-        self.renderCircle!.toolTip = localizedString("Renderer utilization")
-        render.addSubview(self.renderCircle!)
+        details.addArrangedSubview(ane)
+        details.addArrangedSubview(memory)
+        details.addArrangedSubview(fps)
         
-        self.tilerCircle = PieChartView(frame: NSRect(x: 0, y: 0, width: tiler.frame.width, height: tiler.frame.height), drawValue: true)
-        self.tilerCircle!.toolTip = localizedString("Tiler utilization")
-        tiler.addSubview(self.tilerCircle!)
-        
-        view.addSubview(render)
-        view.addSubview(usage)
-        view.addSubview(tiler)
-        
-        return view
-    }
-    
-    private func initChart() -> NSView  {
-        let view: NSView = NSView(frame: NSRect(x: 0, y: 0, width: self.frame.width, height: self.chartHeight))
-        view.heightAnchor.constraint(equalToConstant: 90 + Constants.Popup.separatorHeight).isActive = true
-        let separator = separatorView(localizedString("Usage history"), origin: NSPoint(x: 0, y: self.chartHeight-Constants.Popup.separatorHeight), width: self.frame.width)
-        let container: NSView = NSView(frame: NSRect(x: 0, y: 0, width: self.frame.width, height: separator.frame.origin.y))
-        container.wantsLayer = true
-        container.layer?.backgroundColor = NSColor.lightGray.withAlphaComponent(0.1).cgColor
-        container.layer?.cornerRadius = Constants.Popup.radius
-        
-        let chartFrame = NSRect(x: 1, y: 0, width: view.frame.width - 2, height: container.frame.height)
-        self.chart = LineChartView(frame: chartFrame, num: self.lineChartHistory, scale: self.lineChartScale, fixedScale: self.lineChartFixedScale)
-        container.addSubview(self.chart!)
-        
-        view.addSubview(separator)
-        view.addSubview(container)
+        view.addArrangedSubview(chart)
+        view.addArrangedSubview(details)
         
         return view
     }
     
-    private func initDetails() -> NSView  {
-        let view: NSView = NSView(frame: NSRect(x: 0, y: 0, width: self.frame.width, height: self.detailsHeight))
-        view.heightAnchor.constraint(equalToConstant: self.detailsHeight).isActive = true
-        let separator = separatorView(localizedString("Details"), origin: NSPoint(x: 0, y: self.detailsHeight-Constants.Popup.separatorHeight), width: self.frame.width)
-        let container: NSStackView = NSStackView(frame: NSRect(x: 0, y: 0, width: view.frame.width, height: separator.frame.origin.y))
-        container.orientation = .vertical
-        container.spacing = 0
+    private func initChart() -> NSView {
+        let view = NSStackView()
+        view.orientation = .vertical
+        view.alignment = .centerX
+        view.spacing = Constants.Popup.spacing
         
-        self.modelField = popupRow(container, title: "\(localizedString("Model")):", value: "").1
-        self.coresField = popupRow(container, title: "\(localizedString("Cores")):", value: localizedString("Unknown")).1
-        self.utilizationField = popupRow(container, title: "\(localizedString("Utilization")):", value: "").1
-        self.renderField = popupRow(container, title: "\(localizedString("Renderer utilization")):", value: "").1
-        self.tilerField = popupRow(container, title: "\(localizedString("Tiler utilization")):", value: "").1
-        self.aneField = popupRow(container, title: "\(localizedString("ANE utilization")):", value: "").1
-        self.fpsField = popupRow(container, title: "\("FPS"):", value: "").1
+        let separator = separatorView(localizedString("Usage history"), width: self.frame.width)
+        let chart = LineChartView(scale: self.lineChartScale, fixedScale: self.lineChartFixedScale, history: self.chartHistory)
+        self.chart = chart
         
-        view.addSubview(separator)
-        view.addSubview(container)
+        let memorySeparator = separatorView(localizedString("Memory usage history"), width: self.frame.width)
+        let memoryChart = LineChartView(scale: .linear, history: self.memoryHistory)
+        memoryChart.setToolTipFunc { value in
+            Units(bytes: Int64(value.value)).getReadableMemory(style: .memory)
+        }
+        self.memoryChart = memoryChart
+        
+        view.addArrangedSubview(separator)
+        view.addArrangedSubview(chart)
+        view.addArrangedSubview(memorySeparator)
+        view.addArrangedSubview(memoryChart)
+        NSLayoutConstraint.activate([
+            separator.widthAnchor.constraint(equalTo: view.widthAnchor),
+            chart.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -2),
+            chart.heightAnchor.constraint(equalToConstant: self.chartHeight),
+            memorySeparator.widthAnchor.constraint(equalTo: view.widthAnchor),
+            memoryChart.widthAnchor.constraint(equalTo: chart.widthAnchor),
+            memoryChart.heightAnchor.constraint(equalTo: chart.heightAnchor, multiplier: 0.5)
+        ])
         
         return view
     }
@@ -186,7 +196,7 @@ internal class Popup: PopupWrapper {
         return view
     }
     
-    // MARK: - Callback
+    // MARK: - Updates
     
     public func processCallback(_ list: [TopProcess]?) {
         guard let list else { return }
@@ -207,54 +217,42 @@ internal class Popup: PopupWrapper {
     }
     
     public func numberOfProcessesUpdated() {
+        guard self.contentLoaded else { return }
         if self.processes?.count == self.numberOfProcesses { return }
         
         self.processesView?.removeFromSuperview()
         self.processesView = nil
         self.processes = nil
-        self.addArrangedSubview(self.initProcesses())
+        self.addSection(self.initProcesses())
         self.replay(self.processesCache, render: self.renderProcesses)
-        self.recalculateHeight()
+        self.resizeToFitContent()
     }
     
     public func loadCallback(_ value: GPU_Info) {
+        let date = Date()
         self.apply(value, to: self.loadCache, render: self.renderLoad)
-        if let utilization = value.utilization {
-            self.chart?.addValue(utilization)
+        DispatchQueue.main.async {
+            if let utilization = value.utilization {
+                let sample = DoubleValue(utilization, at: date)
+                self.chartHistory.append(sample)
+                self.chart?.historyUpdated()
+            }
+            if let memory = value.memory {
+                self.memoryHistory.append(DoubleValue(memory, at: date))
+                self.memoryChart?.historyUpdated()
+            }
         }
     }
     
     private func renderLoad(_ value: GPU_Info) {
-        self.modelField?.stringValue = value.model
-        
-        if let cores = value.cores {
-            self.coresField?.stringValue = "\(cores)"
-        }
-        
         if let utilization = value.utilization {
             self.usageCircle?.toolTip = "\(localizedString("GPU utilization")): \(Int(utilization.rounded(toPlaces: 2) * 100))%"
             self.usageCircle?.setValue(utilization)
             self.usageCircle?.display()
-            self.utilizationField?.stringValue = "\(Int(utilization*100))%"
         }
-        if let utilization = value.renderUtilization {
-            self.renderCircle?.toolTip = "\(localizedString("Renderer utilization")): \(Int(utilization.rounded(toPlaces: 2) * 100))%"
-            self.renderCircle?.setValue(utilization)
-            self.renderCircle?.display()
-            self.renderField?.stringValue = "\(Int(utilization*100))%"
-        }
-        if let utilization = value.tilerUtilization {
-            self.tilerCircle?.toolTip = "\(localizedString("Tiler utilization")): \(Int(utilization.rounded(toPlaces: 2) * 100))%"
-            self.tilerCircle?.setValue(utilization)
-            self.tilerCircle?.display()
-            self.tilerField?.stringValue = "\(Int(utilization*100))%"
-        }
-        if let utilization = value.aneUtilization {
-            self.aneField?.stringValue = "\(Int(utilization*100))%"
-        }
-        if let fps = value.fps {
-            self.fpsField?.stringValue = "\(Int(fps.rounded()))"
-        }
+        self.aneField?.stringValue = value.aneUtilization.map { "\(Int($0*100))%" } ?? "n/a"
+        self.memoryField?.stringValue = value.memory.map { Units(bytes: Int64($0)).getReadableMemory(style: .memory) } ?? "n/a"
+        self.fpsField?.stringValue = value.fps.map { "\(Int($0.rounded()))" } ?? "n/a"
         
         self.chart?.display()
     }

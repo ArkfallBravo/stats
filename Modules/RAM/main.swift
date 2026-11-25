@@ -27,9 +27,7 @@ public struct RAM_Usage: Codable, RemoteType {
     
     var swap: Swap
     var pressure: Pressure
-    var pressurePercent: Int = 0
     var compressionPercent: Int = 0
-    var compressionRatio: Double = 0
 
     var swapins: Int64
     var swapouts: Int64
@@ -56,6 +54,7 @@ public struct Swap: Codable {
 public struct Pressure: Codable {
     let level: Int
     let value: RAMPressure
+    let percentage: Int?
 }
 
 public class RAM: Module {
@@ -166,6 +165,7 @@ public class RAM: Module {
         self.portalView.callback(value)
         self.notificationsView.loadCallback(value)
         self.previewView.loadCallback(value)
+        self.summaryCallback(value.usage)
         
         let total: Double = value.total == 0 ? 1 : value.total
         self.menuBar.widgets.filter{ $0.isActive }.forEach { (w: SWidget) in
@@ -238,6 +238,7 @@ public class RAM: Module {
                         switch pair.value {
                         case "level": replacement = "\(value.pressure.level)"
                         case "value": replacement = value.pressure.value.rawValue
+                        case "percentage": replacement = value.pressure.percentage.map { "\($0)%" } ?? "-"
                         case "compression": replacement = "\(value.compressionPercent)%"
                         default: return
                         }
@@ -251,7 +252,11 @@ public class RAM: Module {
                 }
                 widget.setValue(text)
             case let widget as DotWidget: widget.setValue(value.pressure.value.pressureColor())
-            case let widget as MemoryPressureWidget: widget.setValue(value.pressurePercent)
+            case let widget as MemoryPressureWidget:
+                if let percentage = value.pressure.percentage
+                {
+                    widget.setValue(percentage)
+                }
             case let widget as CompressionRatioWidget:
                 widget.setValue(value.compressionPercent)
                 widget.setPressure(value.pressure.value)

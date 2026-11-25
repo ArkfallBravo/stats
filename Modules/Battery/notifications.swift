@@ -41,12 +41,12 @@ class Notifications: NotificationsWrapper {
         self.timeToDischarge = Store.shared.int(key: "\(self.module)_notifications_timeToDischarge_value", defaultValue: self.timeToDischarge)
 
         self.addArrangedSubview(PreferencesSection([
-            PreferencesRow(localizedString("Low level notification"), component: selectView(
+            PreferencesRow(localizedString("Low level notification"), component: self.selectView(
                 action: #selector(self.changeLowLevel),
                 items: notificationLevels,
                 selected: self.lowLevel
             )),
-            PreferencesRow(localizedString("High level notification"), component: selectView(
+            PreferencesRow(localizedString("High level notification"), component: self.selectView(
                 action: #selector(self.changeHighLevel),
                 items: notificationLevels,
                 selected: self.highLevel

@@ -68,7 +68,6 @@
 "Cube" = "Kubický";
 "Logarithmic" = "Logaritmický";
 "Fixed scale" = "Fixní"; // gemma4:31b
-"Cores" = "Jádra";
 "Core" = "Jádro"; // gemma4:31b
 "Settings" = "Nastavení";
 "Name" = "Název"; // gemma4:31b
@@ -89,6 +88,10 @@
 "Run" = "Spustit"; // translategemma:4b
 "Stop" = "Zastavit"; // gemma4:31b
 "Uninstall" = "Odinstalovat"; // translategemma:4b
+"Uninstalling…" = "Probíhá odinstalace…";
+"Could not confirm automatic fan control" = "Nepodařilo se ověřit automatické řízení ventilátorů";
+"Fans may still be in manual mode. Remove the fan helper anyway?" = "Ventilátory mohou být stále v ručním režimu. Přesto odebrat pomocnou aplikaci pro ovládání ventilátorů?";
+"Could not uninstall fan helper" = "Pomocnou aplikaci pro ovládání ventilátorů se nepodařilo odinstalovat";
 "1 sec" = "1 sek"; // gemma4:31b
 "2 sec" = "2 sek"; // gemma4:31b
 "3 sec" = "3 sek"; // gemma4:31b
@@ -167,7 +170,13 @@
 "Pause the Stats" = "Pozastavit Stats";
 "Resume the Stats" = "Obnovit Stats";
 "Combined modules" = "Kombinace modulů";
-"Show icon instead of widgets" = "Zobrazit ikonu místo widgetů";
+"App icon" = "Ikona aplikace";
+"Mini bars" = "Malé sloupce";
+"Concentric rings" = "Soustředné kruhy";
+"Arc dial" = "Obloukový ukazatel";
+"Menu bar" = "Řádek nabídek";
+"Alternate details on click" = "Přepínat detaily kliknutím";
+"Hold Option or Shift, or both." = "Podržte Option nebo Shift, případně obě klávesy.";
 "Combined details" = "Kombinované detaily"; // gemma4:31b
 "Spacing" = "Odsazení";
 "Choose file" = "Vybrat soubor"; // gemma4:31b
@@ -204,6 +213,7 @@
 "Frame" = "Okraj";
 "Value" = "Hodnota";
 "Colorize" = "Obarvit";
+"Gradient fill" = "Přechodová výplň";
 "Colorize value" = "Obarvit hodnotu";
 "Additional information" = "Další informace";
 "Base" = "Základ";
@@ -316,15 +326,14 @@
 "Status" = "Stav"; // translategemma:4b
 "Utilization" = "Využití";
 "Renderer utilization" = "Využití vykreslování";
-"Renderer utilization history" = "Historie využití vykreslování"; // qwen3.8:27b
 "Tiler utilization" = "Využití tilingu";
-"Tiler utilization history" = "Historie využití Tileru"; // qwen3.8:27b
 "GPU usage threshold" = "Prahová hodnota využití GPU";
 "GPU usage is" = "Využití GPU je %0";
 "ANE utilization" = "Využití ANE"; // qwen3.8:27b
 "ANE utilization history" = "Historie využití ANE"; // qwen3.8:27b
 "FPS history" = "Historie FPS"; // qwen3.8:27b
 "GPU utilization history" = "Historie využití GPU"; // qwen3.8:27b
+"Memory usage history" = "Historie využití paměti";
 
 // RAM
 "Memory usage" = "Využití paměti";

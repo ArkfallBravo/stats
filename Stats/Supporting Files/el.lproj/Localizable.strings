@@ -68,7 +68,6 @@
 "Cube" = "Κυβικό";
 "Logarithmic" = "Λογαριθμικό";
 "Fixed scale" = "Σταθερό"; // gemma4:31b
-"Cores" = "Πυρήνες";
 "Core" = "Πύρήνας"; // gemma4:31b
 "Settings" = "Ρυθμίσεις";
 "Name" = "Όνομα"; // translategemma:4b
@@ -89,6 +88,10 @@
 "Run" = "Εκτέλεση"; // gemma4:31b
 "Stop" = "Διακοπή"; // gemma4:31b
 "Uninstall" = "Απεγκατάσταση"; // gemma4:31b
+"Uninstalling…" = "Απεγκατάσταση σε εξέλιξη…";
+"Could not confirm automatic fan control" = "Δεν ήταν δυνατή η επιβεβαίωση του αυτόματου ελέγχου των ανεμιστήρων";
+"Fans may still be in manual mode. Remove the fan helper anyway?" = "Οι ανεμιστήρες ενδέχεται να παραμένουν σε χειροκίνητη λειτουργία. Θέλετε να αφαιρέσετε το βοηθητικό πρόγραμμα των ανεμιστήρων ούτως ή άλλως;";
+"Could not uninstall fan helper" = "Δεν ήταν δυνατή η απεγκατάσταση του βοηθητικού προγράμματος των ανεμιστήρων";
 "1 sec" = "1 δευτ"; // gemma4:31b
 "2 sec" = "2 δευτ"; // gemma4:31b
 "3 sec" = "3 δευτ"; // gemma4:31b
@@ -167,7 +170,13 @@
 "Pause the Stats" = "Παύση του Stats";
 "Resume the Stats" = "Ξαναρχίζω το Stats";
 "Combined modules" = "Συνένωση ενοτήτων";
-"Show icon instead of widgets" = "Εμφάνιση εικονιδίου αντί για widgets";
+"App icon" = "Εικονίδιο εφαρμογής";
+"Mini bars" = "Μικρές μπάρες";
+"Concentric rings" = "Ομόκεντροι δακτύλιοι";
+"Arc dial" = "Τοξοειδής δείκτης";
+"Menu bar" = "Γραμμή μενού";
+"Alternate details on click" = "Εναλλαγή λεπτομερειών με κλικ";
+"Hold Option or Shift, or both." = "Κρατήστε πατημένο το Option ή το Shift, ή και τα δύο.";
 "Combined details" = "Συνδυασμένες λεπτομέρειες"; // gemma4:31b
 "Spacing" = "Κενό";
 "Choose file" = "Επιλογή αρχείου"; // gemma4:31b
@@ -204,6 +213,7 @@
 "Frame" = "Περίγραμμα";
 "Value" = "Τιμή";
 "Colorize" = "Χρωματισμός";
+"Gradient fill" = "Γέμισμα διαβάθμισης";
 "Colorize value" = "Χρωματισμός Τιμής";
 "Additional information" = "Επιπρόσθετες πληροφορίες";
 "Base" = "Βάση";
@@ -316,15 +326,14 @@
 "Status" = "Κατάσταση";
 "Utilization" = "Χρήση";
 "Renderer utilization" = "Χρήση Render"; // gemma4:31b
-"Renderer utilization history" = "Ιστορικό χρήσης Render"; // qwen3.8:27b
 "Tiler utilization" = "Χρήση Tiler"; // gemma4:31b
-"Tiler utilization history" = "Ιστορικό χρήσης Tiler"; // qwen3.8:27b
 "GPU usage threshold" = "Όριο χρήσης GPU"; // gemma4:31b
 "GPU usage is" = "Η χρήση της GPU είναι %0"; // gemma4:31b
 "ANE utilization" = "Χρήση ANE"; // qwen3.8:27b
 "ANE utilization history" = "Ιστορικό χρήσης ANE"; // qwen3.8:27b
 "FPS history" = "Ιστορικό FPS"; // qwen3.8:27b
 "GPU utilization history" = "Ιστορικό χρήσης GPU"; // qwen3.8:27b
+"Memory usage history" = "Ιστορικό χρήσης μνήμης";
 
 // RAM
 "Memory usage" = "Χρήση μνήμης";

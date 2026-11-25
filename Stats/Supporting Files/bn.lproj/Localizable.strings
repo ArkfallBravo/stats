@@ -68,7 +68,6 @@
 "Cube" = "ঘন";
 "Logarithmic" = "লগারিদমিক";
 "Fixed scale" = "স্থির স্কেল";
-"Cores" = "কোর";
 "Core" = "কোর";
 "Settings" = "সেটিংস";
 "Name" = "নাম";
@@ -89,6 +88,10 @@
 "Run" = "চালু করুন";
 "Stop" = "থামান";
 "Uninstall" = "আনইনস্টল করুন";
+"Uninstalling…" = "আনইনস্টল করা হচ্ছে…";
+"Could not confirm automatic fan control" = "ফ্যানের নিয়ন্ত্রণ স্বয়ংক্রিয় কি না তা নিশ্চিত করা যায়নি";
+"Fans may still be in manual mode. Remove the fan helper anyway?" = "ফ্যানগুলো এখনও ম্যানুয়াল মোডে থাকতে পারে। তবুও কি ফ্যান হেল্পারটি সরিয়ে ফেলবেন?";
+"Could not uninstall fan helper" = "ফ্যান হেল্পারটি আনইনস্টল করা যায়নি";
 "1 sec" = "1 সেকেন্ড";
 "2 sec" = "2 সেকেন্ড";
 "3 sec" = "3 সেকেন্ড";
@@ -167,7 +170,13 @@
 "Pause the Stats" = "Stats বিরতি দিন";
 "Resume the Stats" = "Stats পুনরায় শুরু করুন";
 "Combined modules" = "সম্মিলিত মডিউল";
-"Show icon instead of widgets" = "উইজেটের পরিবর্তে আইকন দেখান";
+"App icon" = "অ্যাপ আইকন";
+"Mini bars" = "ছোট বার";
+"Concentric rings" = "সমকেন্দ্রিক বলয়";
+"Arc dial" = "চাপাকৃতির ডায়াল";
+"Menu bar" = "মেনু বার";
+"Alternate details on click" = "ক্লিক করলে বিবরণ পাল্টান";
+"Hold Option or Shift, or both." = "Option বা Shift, অথবা দুটোই চেপে ধরে রাখুন।";
 "Combined details" = "সম্মিলিত বিবরণ";
 "Spacing" = "ব্যবধান";
 "Choose file" = "ফাইল নির্বাচন করুন";
@@ -204,6 +213,7 @@
 "Frame" = "ফ্রেম";
 "Value" = "মান";
 "Colorize" = "রঙিন করুন";
+"Gradient fill" = "গ্রেডিয়েন্ট ভরাট";
 "Colorize value" = "মান রঙিন করুন";
 "Additional information" = "অতিরিক্ত তথ্য";
 "Base" = "ভিত্তি";
@@ -316,15 +326,14 @@
 "Status" = "অবস্থা";
 "Utilization" = "ব্যবহার";
 "Renderer utilization" = "রেন্ডার ব্যবহার";
-"Renderer utilization history" = "রেন্ডার ব্যবহারের ইতিহাস"; // qwen3.8:27b
 "Tiler utilization" = "টাইলার ব্যবহার";
-"Tiler utilization history" = "Tiler ব্যবহারের ইতিহাস"; // qwen3.8:27b
 "GPU usage threshold" = "GPU ব্যবহারের সীমা";
 "GPU usage is" = "GPU ব্যবহার %0";
 "ANE utilization" = "ANE ব্যবহার"; // qwen3.8:27b
 "ANE utilization history" = "ANE ব্যবহারের ইতিহাস"; // qwen3.8:27b
 "FPS history" = "FPS ইতিহাস"; // qwen3.8:27b
 "GPU utilization history" = "GPU ব্যবহারের ইতিহাস"; // qwen3.8:27b
+"Memory usage history" = "মেমোরি ব্যবহারের ইতিহাস";
 
 // RAM
 "Memory usage" = "মেমোরি ব্যবহার";

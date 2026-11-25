@@ -19,8 +19,10 @@ public struct module_c {
     internal var widgetsConfig: NSDictionary = NSDictionary()
     internal var settingsConfig: NSDictionary = NSDictionary()
     internal var previewConfig: NSDictionary = NSDictionary()
+    internal var summaryConfig: NSDictionary = NSDictionary()
     
     public var hasPreview: Bool { self.previewConfig["available"] as? Bool ?? false }
+    public var hasSummary: Bool { self.summaryConfig["menu_bar"] as? Bool ?? false }
     
     init(in path: String) {
         let dict: NSDictionary = NSDictionary(contentsOfFile: path)!
@@ -70,6 +72,10 @@ public struct module_c {
         if let previewDict = dict["Preview"] as? NSDictionary {
             self.previewConfig = previewDict
         }
+        
+        if let summaryDict = dict["Summary"] as? NSDictionary {
+            self.summaryConfig = summaryDict
+        }
     }
 }
 
@@ -83,7 +89,7 @@ open class Module {
     public var window: Window? = nil
     public let portal: Portal_p?
     
-    public var name: String { config.name }
+    public var name: String { self.config.name }
     public var combinedPosition: Int {
         get { Store.shared.int(key: "\(self.name)_position", defaultValue: 0) }
         set { Store.shared.set(key: "\(self.name)_position", value: newValue) }
@@ -92,7 +98,7 @@ open class Module {
     
     public var popupKeyboardShortcut: [UInt16] { self.popupView?.keyboardShortcut ?? [] }
     
-    private var moduleType: ModuleType
+    public let moduleType: ModuleType
     
     private var settingsView: Settings_v? = nil
     private var popup: PopupWindow? = nil
@@ -104,6 +110,8 @@ open class Module {
     private var readers: [Reader_p] = []
     private var popupVisible = false
     private var settingsVisible = false
+    
+    public var summaryCallback: ((ModuleType, Double?) -> Void)? = nil
     
     private var pauseState: Bool {
         get { Store.shared.bool(key: "pause", defaultValue: false) }
@@ -145,11 +153,11 @@ open class Module {
             self.disable()
         }
         
-        NotificationCenter.default.addObserver(self, selector: #selector(listenForMouseDownInSettings), name: .clickInSettings, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(listenForModuleToggle), name: .toggleModule, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(listenForPopupToggle), name: .togglePopup, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(listenForToggleWidget), name: .toggleWidget, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(listenForWindowOpen), name: .openWindow, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.listenForMouseDownInSettings), name: .clickInSettings, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.listenForModuleToggle), name: .toggleModule, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.listenForPopupToggle), name: .togglePopup, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.listenForToggleWidget), name: .toggleWidget, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.listenForWindowOpen), name: .openWindow, object: nil)
         
         // swiftlint:disable empty_count
         if self.config.widgetsConfig.count != 0 {
@@ -158,6 +166,16 @@ open class Module {
         } else {
             debug("Module started without widget", log: self.log)
         }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    // create the settings window when first opened
+    public func ensureSettingsWindow() -> Window? {
+        guard self.available else { return nil }
+        if let window = self.window { return window }
         
         self.window = Window(
             config: self.config,
@@ -169,11 +187,7 @@ open class Module {
         )
         self.window?.setState(self.enabled)
         
-        self.popup = PopupWindow(title: self.config.name, module: self.moduleType, view: self.popupView, visibilityCallback: self.popupVisibilityCallback)
-    }
-    
-    deinit {
-        NotificationCenter.default.removeObserver(self)
+        return self.window
     }
     
     // load function which call when app start
@@ -221,6 +235,7 @@ open class Module {
         guard self.available else { return }
         
         self.enabled = false
+        self.summaryCallback(nil)
         if !self.pauseState { // omit saving the disable state when toggle by pause, need for resume state restoration
             Store.shared.set(key: "\(self.config.name)_state", value: false)
             self.userDefaults?.set(false, forKey: "\(self.config.name)_state")
@@ -238,6 +253,15 @@ open class Module {
     
     public func setReaders(_ list: [Reader_p?]) {
         self.readers = list.filter({ $0 != nil }).map({ $0! as Reader_p })
+    }
+    
+    public func summaryCallback(_ value: Double?) {
+        guard self.config.hasSummary else { return }
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.summaryCallback?(self.moduleType, value)
+        }
     }
     
     // determine if module is available (can be overrided in module)
@@ -312,13 +336,20 @@ open class Module {
     }
     
     @objc private func listenForPopupToggle(_ notification: Notification) {
-        guard let popup = self.popup,
-              let name = notification.userInfo?["module"] as? String,
+        guard let name = notification.userInfo?["module"] as? String,
               let buttonOrigin = notification.userInfo?["origin"] as? CGPoint,
               let buttonCenter = notification.userInfo?["center"] as? CGFloat,
               self.config.name == name else {
             return
         }
+        
+        if self.popup?.isVisible != true, let view = self.popupView as? PopupWrapper {
+            view.prepareForDisplay()
+        }
+        if self.popup == nil {
+            self.popup = PopupWindow(title: self.config.name, module: self.moduleType, view: self.popupView, visibilityCallback: self.popupVisibilityCallback)
+        }
+        guard let popup = self.popup else { return }
         
         var reopen: Bool = false
         if let widget = notification.userInfo?["widget"] as? widget_t {
@@ -388,8 +419,7 @@ open class Module {
         guard let name = notification.userInfo?["module"] as? String, name == self.config.name else {
             return
         }
-        let isEmpty = self.menuBar.widgets.filter({ $0.isActive }).isEmpty
-        if !isEmpty && !self.enabled {
+        if !self.enabled && self.menuBar.widgets.contains(where: { $0.isActive }) {
             NotificationCenter.default.post(name: .toggleModule, object: nil, userInfo: ["module": self.config.name, "state": true])
         }
     }

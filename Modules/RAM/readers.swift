@@ -62,19 +62,22 @@ public class UsageReader: Reader<RAM_Usage> {
             var pressureLevel: Int = 0
             sysctlbyname("kern.memorystatus_vm_pressure_level", &pressureLevel, &intSize, nil, 0)
 
-            var memoryStatusLevel: Int = 100
-            var memoryStatusLevelSize: size_t = MemoryLayout<Int>.size
-            sysctlbyname("kern.memorystatus_level", &memoryStatusLevel, &memoryStatusLevelSize, nil, 0)
-            let pressurePercent: Int = max(0, min(100, 100 - memoryStatusLevel))
             let availablePages = UInt64(stats.free_count) + UInt64(stats.active_count) + UInt64(stats.inactive_count)
             let compressionPercent = UsageReader.compressionPercent(compressedPages: UInt64(stats.compressor_page_count), availablePages: availablePages)
-            let compressionRatio = UsageReader.compressionRatio(compressedPages: UInt64(stats.compressor_page_count), availablePages: availablePages)
             
             var pressureValue: RAMPressure
             switch pressureLevel {
             case 2: pressureValue = .warning
             case 4: pressureValue = .critical
             default: pressureValue = .normal
+            }
+            
+            var memoryLevel: Int32 = 0
+            var memoryLevelSize = MemoryLayout<Int32>.size
+            var pressurePercentage: Int? = nil
+            if sysctlbyname("kern.memorystatus_level", &memoryLevel, &memoryLevelSize, nil, 0) == 0,
+               memoryLevelSize == MemoryLayout<Int32>.size, (0...100).contains(memoryLevel) {
+                pressurePercentage = 100 - Int(memoryLevel)
             }
             
             var stringSize: size_t = MemoryLayout<xsw_usage>.size
@@ -99,11 +102,9 @@ public class UsageReader: Reader<RAM_Usage> {
                     used: Double(swap.xsu_used),
                     free: Double(swap.xsu_avail)
                 ),
-                pressure: Pressure(level: pressureLevel, value: pressureValue),
-                pressurePercent: pressurePercent,
+                pressure: Pressure(level: pressureLevel, value: pressureValue, percentage: pressurePercentage),
                 compressionPercent: compressionPercent,
-                compressionRatio: compressionRatio,
-
+                
                 swapins: swapins,
                 swapouts: swapouts
             ))
@@ -122,17 +123,6 @@ public class UsageReader: Reader<RAM_Usage> {
             return 0
         }
         return Int(compressedPages * 100 / pageablePages)
-    }
-
-    // Returns C/(A+C) as an unrounded fraction from 0 to 1.
-    public static func compressionRatio(compressedPages: UInt64, availablePages: UInt64) -> Double
-    {
-        let pageablePages = compressedPages + availablePages
-        if pageablePages == 0
-        {
-            return 0
-        }
-        return Double(compressedPages) / Double(pageablePages)
     }
 }
 
@@ -198,9 +188,10 @@ public class ProcessReader: Reader<[TopProcess]> {
         
         let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-        let output = String(data: outputData, encoding: .utf8)
+        // swiftlint:disable:next optional_data_string_conversion
+        let output = String(decoding: outputData, as: UTF8.self)
         _ = String(data: errorData, encoding: .utf8)
-        guard let output, !output.isEmpty else { return }
+        guard !output.isEmpty else { return }
         
         var processes: [TopProcess] = []
         output.enumerateLines { (line, _) in
@@ -324,7 +315,7 @@ public class ProcessReader: Reader<[TopProcess]> {
         var command = arr.joined(separator: " ")
             .replacingOccurrences(of: pidString, with: "")
             .trimmingCharacters(in: .whitespaces)
-        
+            
         if let regex = try? NSRegularExpression(pattern: " (\\+|\\-)*$", options: .caseInsensitive) {
             command = regex.stringByReplacingMatches(in: command, options: [], range: NSRange(location: 0, length: command.count), withTemplate: "")
         }
