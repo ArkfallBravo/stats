@@ -19,8 +19,18 @@ Designs that were considered but not chosen. Read this before redesigning one of
 - **Rejected test gates:** comparing the failing-test set before and after the merge (exact, but the suite runs twice), and `-skip-testing` the known failures (the list needs upkeep and hides the tests). The user chose fixing the two failing tests and keeping a strict gate. **Baseline comparison would come back if** upstream starts shipping tests that fail often on this machine.
 - **Rejected: skip lint when swiftlint is missing.** The user chose installing it.
 
-## RAM popup gauge: title and band thresholds (decided 2026-11-06)
+## RAM popup gauge: title and band thresholds (decided 2026-11-06; gauge removed 2026-11-24)
 - **Chosen:** the title shows the kernel pressure level, and the critical band starts at 23/35 (~65.7%).
 - **Rejected after trying it: the ratio percent as the title.** It hid the only pressure-level name in the popup and repeated the details row's number.
 - **Rejected: a 2/3 (66.6%) critical band.** It sits about a point above the kernel's real threshold.
 - **Would come back if** the gauge moves somewhere without the details row, so the number has no other home.
+
+## RAM popup dashboard after upstream's redesign (decided 2026-11-24)
+- **Chosen:** upstream's redesigned dashboard (usage pie plus Usage / Memory pressure / SWAP rows) with compression ratio as a 4th row. The fork's compression gauge and its band constants were deleted.
+- **Rejected: compression gauge in place of upstream's pie** (keeping upstream's rows). Usage would only appear as text.
+- **Rejected: keep the fork's old gauge + pie dashboard.** Most conflict surface on every future upstream sync.
+- **Would come back if** a needle view of the ratio against the kernel thresholds is missed; the band math (warning 1/2, critical 23/35) is in the entry above and in git history (`e50ee0f0`).
+
+## RAM pressure percentage source (decided 2026-11-24)
+- **Chosen:** upstream's `Pressure.percentage: Int?` (checks the sysctl result and reads `Int32`). The fork's `RAM_Usage.pressurePercent` and its second `kern.memorystatus_level` read were dropped; consumers skip a tick when it's nil.
+- **Rejected: keep both fields.** Two reads of the same sysctl, and two values that could disagree.

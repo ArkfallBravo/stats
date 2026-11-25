@@ -5,7 +5,7 @@
 **Status (2026-11-06):** proposal posted on upstream issue #318 (https://github.com/exelban/stats/issues/318#issuecomment-6693274518). We're waiting for exelban to answer before opening a PR.
 
 - **Why ask first:** exelban closed four memory-pressure PRs (#3239, #3068, #3134, #3020). On #3134 he refused multi-feature PRs, said pressure should be a colorize option rather than a value, and doubted that `memorystatus_level` reads correctly on Intel. Upstream's feature-request template forbids new issues on topics already covered, so the proposal went to #318, where he once asked for an algorithm to compute pressure.
-- **PR branch:** `feat/ram-compression-ratio-widget`, in a worktree at `~/stats-pr/cmpr` (outside iCloud), cut from `upstream/master`. It's uncommitted and not pushed. It's a hand-port in upstream style, not a cherry-pick:
+- **PR branch:** `feat/ram-compression-ratio-widget`, in a worktree at `~/stats-pr/cmpr` (outside iCloud), cut from `upstream/master` at `482da327`. It's uncommitted and not pushed. **It's stale:** upstream's RAM popup redesign (`064445c8`, 2026-11-24) replaced the fixed-height `NSGridView` layout, so the `22*7` row below must be redone against the new dashboard (`PopupDashboardDetailsRow`) after rebasing onto current `upstream/master`. It's a hand-port in upstream style, not a cherry-pick:
   - `LabeledPercentWidget` is folded into `CompressionRatioWidget`.
   - The popup gets one row (`22*7`).
   - The notification Store keys match the fork's (`compressionPercent`).

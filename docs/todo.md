@@ -1,10 +1,9 @@
 # todo.md
 
 - Fix the RAM "Memory pressure percent" notification subtitle. `Modules/RAM/notifications.swift` calls `localizedString("Memory pressure is", "<n>%")`, but that key isn't in any `Localizable.strings`. `localizedString` (`Kit/helpers.swift`) then returns the bare key with no `%0` to substitute, so the notification never shows the number. Either add the key (`"Memory pressure is" = "Memory pressure is %0";`) or use the `"<label>: <value>"` pattern the swap notification uses.
-- Clean up the untracked iCloud duplicates `Modules/RAM/PressureHistoryView 2.swift`, `scripts/sync-upstream 2.sh`, `Kit/Widgets/Icon 2.swift` and `Tests/SMC 2.swift` (the last two appeared during the 2026-10-09 upstream merge). Every one except `PressureHistoryView 2.swift` is byte-identical to its original. `PressureHistoryView 2.swift` is **not**: it adds a `ts: Date` field to `Point`, set to `Date()` in `addValue`. Check with the user whether that was intended work before deleting it.
 - Unanswered question for the user: should the standardized file header from the global CLAUDE.md be applied to upstream-owned files when the compression-ratio work touches them? So far only fork-owned files have it (`MemoryPressure.swift`, `LabeledPercent.swift`, `CompressionRatio.swift`). Rewriting upstream headers would add merge-conflict surface on every upstream sync.
 - Optional: surface the second critical trigger, the compressor nearly full (`vm.compressor.segment.total`/`.limit`), alongside the compression ratio.
-- Consider feeding all the RAM popup charts every tick. Today the hidden charts get no data, and `PressureHistoryView.reinit`/`CombinedHistoryView.reinit` wipe their history, unlike `LineChartView.reinit`, which keeps points.
+- Consider feeding all the RAM popup charts every tick. Today `Popup.appendHistory` feeds only the selected chart metric's history, and `toggleChartMetric` resets the newly selected history, so switching metrics always starts that chart empty. The histories now live on `Popup` (not the views), so feeding all three would let a switch show existing data; pressure and compression would then need separate rings instead of sharing `levelHistory`.
 - Decide on the fork's `StepperInput` change in `Kit/helpers.swift`. The fixed 80pt width now applies to every unit-less stepper, which also changes Net's steppers and adds conflict surface in upstream's busiest file. The alternative is sizing the Battery "min" stepper at its call site.
 - Decide on `formatMinutes` in `Modules/Battery/notifications.swift`. It formats durations differently from `printSecondsToHoursMinutesSeconds()`, used a few lines above, and needs four extra localization keys.
 - Optional: move `RAMPressure.alertColor()`/`textColor()` out of the upstream enum body into a fork-owned extension, to shrink merge-conflict surface.
@@ -41,4 +40,5 @@
   - Branch from `master` (upstream), not `my-changes`. Cherry-pick or re-split the RAM commits into coherent PR commits.
   - Leave out the fork-only pieces: the Debug DSTROOT install to /Applications, `scripts/`, `docs/`, and the fork's file headers.
   - Add strings to every locale so `Kit/scripts/i18n.py` passes, and get `swiftlint` clean.
-  - Probably finish the RAM history color work (`docs/plan.md`) first.
+  - The RAM history color work is committed (`5c051bf2`); the gauge-based compression display was replaced by a dashboard row in the 2026-11-24 upstream merge.
+- Fix the 160 `Kit/scripts/i18n.py` errors on `my-changes` (e.g. missing `"%0 minutes"`, `"1 hour"`, `"Time to discharge is"`). Upstream `master` passes, so they come from fork-added keys missing in the other 40 locales. CI's i18n workflow fails on the fork until this is done.

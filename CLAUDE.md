@@ -84,6 +84,8 @@ A module target follows a fixed file layout:
 - `config.plist` / `Info.plist` — declares the module's name, icon symbol, available widgets, and settings schema; `module_c` (`Kit/module/module.swift`) parses this at init
 - `widget.swift`, `popup.swift`, `portal.swift`, `settings.swift`, `notifications.swift`, `preview.swift` — the module's menu bar widget view, popup (dropdown) view, "combined view" portal row, settings pane, notification thresholds UI, and window preview, respectively
 
+Popups load their views on demand and drop them on every close (`PopupWrapper.releaseContent()`, then the module's `unloadContent()`), so anything that must outlive a close — chart history, cached readings — belongs on the `Popup` object, not inside a view. The RAM popup's `chartHistory`/`levelHistory`/`combinedHistory` follow this.
+
 `Kit/module/` holds the base classes every module builds on: `Module` (lifecycle: mount/enable/disable/terminate, notification-driven popup/window/widget toggling), `Reader<T>` (interval-based polling with pause/lock semantics for popup vs. background state, backed by `DB` for history), `Portal_p`/`PortalWrapper` (rows in the combined menu bar view), `widget.swift`/`window.swift` (menu bar rendering).
 
 `Stats/AppDelegate.swift` imports every module framework and instantiates them into a single `var modules: [Module]` array — this is the entire module registry; there's no dynamic/plugin-bundle loading.
