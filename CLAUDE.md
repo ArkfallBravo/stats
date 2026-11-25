@@ -72,6 +72,10 @@ byte-identical to the original. `.git/info/exclude` ignores `* [2-9].*` and
 `git status`; find them with `find . -path ./.git -prune -o -name '* [0-9].*' -print`.
 Stage files by name, not `git add -A`.
 
+## File headers
+
+Apply the global standard file header (MODULE/PURPOSE/CREATED) only to fork-owned files. Leave upstream-owned files' Xcode-style headers (`Created by Serhiy Mytrovtsiy`, copyright line) untouched, even when editing those files. Rewriting them would strip the author's copyright notice, which MIT asks to keep, and it adds merge-conflict surface next to the `import` lines that upstream edits. The header style also shows at a glance who owns a file. Decided 2026-11-24.
+
 ## Architecture
 
 ### Module system
